@@ -3,36 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Face Detector</title>
+  <meta name="theme-color" content="#080b14">
+  <title>AI Yüz Algılama</title>
+
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #0b1020;
-      color: #fff;
+      background: #080b14;
+      color: white;
       font-family: Arial, sans-serif;
-      padding: 20px;
+      padding: 18px;
     }
+
     .app {
       width: min(900px, 100%);
+      margin: auto;
       text-align: center;
     }
-    h1 { margin: 0 0 8px; }
-    p { color: #aeb8d0; margin-top: 0; }
+
+    h1 {
+      margin: 0 0 8px;
+    }
+
+    p {
+      color: #9faac3;
+      margin-top: 0;
+    }
+
     .camera {
       position: relative;
       width: 100%;
       aspect-ratio: 16 / 10;
-      overflow: hidden;
+      background: #02040a;
+      border: 1px solid #29334d;
       border-radius: 18px;
-      background: #050812;
-      border: 1px solid #26304b;
+      overflow: hidden;
     }
-    video, canvas {
+
+    video,
+    canvas {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -40,204 +54,946 @@
       object-fit: cover;
       transform: scaleX(-1);
     }
-    canvas { pointer-events: none; }
-    .status {
-      margin: 14px auto;
-      padding: 12px 16px;
-      border-radius: 12px;
-      background: #151d32;
-      color: #dce4ff;
-      max-width: 600px;
+
+    canvas {
+      pointer-events: none;
     }
+
+    .status {
+      margin: 14px 0;
+      padding: 14px;
+      background: #151b2c;
+      border-radius: 12px;
+      text-align: left;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+
     button {
+      flex: 1;
       border: 0;
       border-radius: 12px;
-      padding: 13px 20px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      background: #6c7cff;
+      padding: 14px;
+      background: #6575ff;
       color: white;
+      font-size: 16px;
+      font-weight: bold;
     }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    .count {
-      margin-top: 12px;
-      font-size: 18px;
-      font-weight: 700;
+
+    button.secondary {
+      background: #252d42;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      background: #11182a;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 20px;
+    }
+
+    .stat span {
+      color: #9faac3;
+      font-size: 12px;
+    }
+
+    .diagnostics {
+      margin-top: 14px;
+      padding: 14px;
+      background: #0e1422;
+      border: 1px solid #202a40;
+      border-radius: 14px;
+      text-align: left;
+    }
+
+    .diagnostics h2 {
+      font-size: 16px;
+      margin: 0 0 10px;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      color: #cdd6ec;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 600px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
   </style>
 </head>
-<body>
-  <main class="app">
-    <h1>🤖 AI Yüz Algılama</h1>
-    <p>İlk prototip — kamera görüntüsündeki yüzleri gerçek zamanlı algılar.</p>
 
-    <div class="camera">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="canvas"></canvas>
+<body>
+
+<div class="app">
+
+  <h1>🤖 AI Yüz Algılama</h1>
+  <p>Gerçek zamanlı yüz algılama sistemi</p>
+
+  <div class="camera">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div id="status" class="status">
+    ⏳ Sistem başlatılıyor...
+  </div>
+
+  <div class="buttons">
+    <button id="startBtn" disabled>
+      Kamerayı Başlat
+    </button>
+
+    <button id="stopBtn" class="secondary" disabled>
+      Kamerayı Durdur
+    </button>
+  </div>
+
+  <div class="stats">
+
+    <div class="stat">
+      <b id="faceCount">0</b>
+      <span>Yüz</span>
     </div>
 
-    <div id="status" class="status">Model hazırlanıyor...</div>
-    <button id="startBtn" disabled>Kamerayı Başlat</button>
-    <div id="count" class="count">Yüz: 0</div>
-  </main>
+    <div class="stat">
+      <b id="fps">0</b>
+      <span>FPS</span>
+    </div>
 
-  <script type="module">
-    import { FaceDetector, FilesetResolver }
-      from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22";
+    <div class="stat">
+      <b id="confidence">0%</b>
+      <span>Güven</span>
+    </div>
 
-    const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const status = document.getElementById("status");
-    const startBtn = document.getElementById("startBtn");
-    const count = document.getElementById("count");
+    <div class="stat">
+      <b id="position">—</b>
+      <span>Konum</span>
+    </div>
 
-    let detector = null;
-    let stream = null;
-    let running = false;
+  </div>
 
-    function showError(message) {
-      status.textContent = "⚠️ " + message;
-      status.style.color = "#ffb4b4";
-    }
+  <div class="diagnostics">
 
-    async function loadModel() {
-      try {
-        status.textContent = "⏳ 1/4 MediaPipe kütüphanesi yükleniyor...";
+    <h2>🔧 Sistem Durumu</h2>
 
-        const vision = await import(LIB_URL);
-        FaceDetector = vision.FaceDetector;
-        FilesetResolver = vision.FilesetResolver;
+    <pre id="diagnostics">
+Başlatılıyor...
+    </pre>
 
-        if (!FaceDetector || !FilesetResolver) {
-          throw new Error("MediaPipe modülü yüklendi fakat gerekli sınıflar bulunamadı.");
-        }
+  </div>
 
-        status.textContent = "⏳ 2/4 WebAssembly motoru yükleniyor...";
+</div>
 
-        const visionFiles = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
+
+<script type="module">
+
+/* =========================================================
+   AYARLAR
+========================================================= */
+
+const MEDIAPIPE_URL =
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm";
+
+const WASM_URL =
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
+
+const MODEL_URL =
+  "https://storage.googleapis.com/mediapipe-models/face_detector/face_detector/short_range/float16/1/face_detector.tflite";
+
+
+/* =========================================================
+   ELEMENTLER
+========================================================= */
+
+const video =
+  document.getElementById("video");
+
+const canvas =
+  document.getElementById("canvas");
+
+const ctx =
+  canvas.getContext("2d");
+
+const status =
+  document.getElementById("status");
+
+const diagnostics =
+  document.getElementById("diagnostics");
+
+const startBtn =
+  document.getElementById("startBtn");
+
+const stopBtn =
+  document.getElementById("stopBtn");
+
+const faceCount =
+  document.getElementById("faceCount");
+
+const fpsElement =
+  document.getElementById("fps");
+
+const confidenceElement =
+  document.getElementById("confidence");
+
+const positionElement =
+  document.getElementById("position");
+
+
+/* =========================================================
+   DEĞİŞKENLER
+========================================================= */
+
+let FaceDetector = null;
+let FilesetResolver = null;
+
+let detector = null;
+let stream = null;
+
+let running = false;
+
+let frameCounter = 0;
+let lastFpsTime = performance.now();
+
+
+/* =========================================================
+   DURUM SİSTEMİ
+========================================================= */
+
+const systemStatus = [];
+
+
+function addStatus(name, success, detail = "") {
+
+  const existing =
+    systemStatus.find(x => x.name === name);
+
+  if (existing) {
+
+    existing.success = success;
+    existing.detail = detail;
+
+  } else {
+
+    systemStatus.push({
+      name,
+      success,
+      detail
+    });
+
+  }
+
+  renderDiagnostics();
+}
+
+
+function renderDiagnostics() {
+
+  diagnostics.textContent =
+    systemStatus
+      .map(item => {
+
+        const icon =
+          item.success ? "✅" : "❌";
+
+        return (
+          icon +
+          " " +
+          item.name +
+          (
+            item.detail
+              ? " — " + item.detail
+              : ""
+          )
         );
 
-        status.textContent = "⏳ 3/4 Yüz algılama modeli indiriliyor...";
+      })
+      .join("\n");
 
-        detector = await FaceDetector.createFromOptions(visionFiles, {
-          baseOptions: {
-            modelAssetPath:
-              "https://storage.googleapis.com/mediapipe-models/face_detector/face_detector/short_range/float16/1/face_detector.tflite"
+}
+
+
+/* =========================================================
+   HATA
+========================================================= */
+
+function showError(message) {
+
+  status.textContent =
+    "❌ HATA\n\n" + message;
+
+  status.style.color =
+    "#ff9b9b";
+
+}
+
+
+/* =========================================================
+   AI MODELİNİ YÜKLE
+========================================================= */
+
+async function loadAI() {
+
+  try {
+
+    status.textContent =
+      "⏳ 1/4 MediaPipe yükleniyor...";
+
+
+    /* ---------- MEDIAPIPE ---------- */
+
+    try {
+
+      const vision =
+        await import(MEDIAPIPE_URL);
+
+      FaceDetector =
+        vision.FaceDetector;
+
+      FilesetResolver =
+        vision.FilesetResolver;
+
+      if (
+        !FaceDetector ||
+        !FilesetResolver
+      ) {
+
+        throw new Error(
+          "MediaPipe sınıfları bulunamadı."
+        );
+
+      }
+
+      addStatus(
+        "MediaPipe",
+        true,
+        "Kütüphane yüklendi"
+      );
+
+    } catch (error) {
+
+      addStatus(
+        "MediaPipe",
+        false,
+        error.message
+      );
+
+      throw error;
+    }
+
+
+    /* ---------- WASM ---------- */
+
+    status.textContent =
+      "⏳ 2/4 WebAssembly motoru yükleniyor...";
+
+
+    try {
+
+      const fileset =
+        await FilesetResolver.forVisionTasks(
+          WASM_URL
+        );
+
+      window.__visionFileset =
+        fileset;
+
+      addStatus(
+        "WebAssembly",
+        true,
+        "AI çalışma motoru hazır"
+      );
+
+    } catch (error) {
+
+      addStatus(
+        "WebAssembly",
+        false,
+        error.message
+      );
+
+      throw error;
+    }
+
+
+    /* ---------- MODEL ---------- */
+
+    status.textContent =
+      "⏳ 3/4 Yüz modeli yükleniyor...";
+
+
+    try {
+
+      detector =
+        await FaceDetector.createFromOptions(
+          window.__visionFileset,
+          {
+
+            baseOptions: {
+
+              modelAssetPath:
+                MODEL_URL
+
+            },
+
+            runningMode:
+              "VIDEO",
+
+            minDetectionConfidence:
+              0.5
+
+          }
+        );
+
+      addStatus(
+        "Yüz modeli",
+        true,
+        "Model başarıyla hazır"
+      );
+
+    } catch (error) {
+
+      addStatus(
+        "Yüz modeli",
+        false,
+        error.message
+      );
+
+      throw error;
+    }
+
+
+    /* ---------- TAMAMLANDI ---------- */
+
+    status.textContent =
+      "✅ 4/4 AI sistemi hazır!\n\n" +
+      "Kamerayı başlatabilirsin.";
+
+    status.style.color =
+      "#9dffca";
+
+    addStatus(
+      "AI sistemi",
+      true,
+      "Çalışmaya hazır"
+    );
+
+    startBtn.disabled =
+      false;
+
+  } catch (error) {
+
+    console.error(
+      "AI BAŞLATMA HATASI:",
+      error
+    );
+
+    showError(
+      "AI sistemi başlatılamadı.\n\n" +
+      "Teknik hata:\n" +
+      (error?.message || error)
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   KAMERA
+========================================================= */
+
+async function startCamera() {
+
+  try {
+
+    if (
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
+
+      throw new Error(
+        "Bu tarayıcı kamera erişimini desteklemiyor."
+      );
+
+    }
+
+
+    status.textContent =
+      "📷 Kamera izni bekleniyor...";
+
+
+    stream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video: {
+
+          facingMode: {
+            ideal: "user"
           },
-          runningMode: "VIDEO",
-          minDetectionConfidence: 0.5
-        });
 
-        status.textContent = "✅ 4/4 AI modeli hazır! Kamerayı başlatabilirsin.";
-        startBtn.disabled = false;
-
-      } catch (error) {
-        console.error("AI başlatma hatası:", error);
-
-        let reason = error?.message || String(error);
-
-        if (reason.includes("Failed to fetch") || reason.includes("NetworkError")) {
-          reason += "\n\nİnternet/CDN erişimi başarısız.";
-        }
-
-        showError("AI başlatılamadı.\n\n" + reason);
-      }
-    }
-
-    async function startCamera() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: "user",
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
+          width: {
+            ideal: 1280
           },
-          audio: false
-        });
 
-        video.srcObject = stream;
-        await video.play();
+          height: {
+            ideal: 720
+          }
 
-        running = true;
-        startBtn.textContent = "Kamera Açık";
-        startBtn.disabled = true;
-        status.textContent = "🟢 Kamera açık — yüz aranıyor...";
-        requestAnimationFrame(detect);
-      } catch (error) {
-        console.error(error);
-        if (error.name === "NotAllowedError") {
-          showError("Kamera izni verilmedi. Tarayıcı ayarlarından kamera iznini aç.");
-        } else {
-          showError("Kamera açılamadı: " + error.message);
-        }
-      }
-    }
+        },
 
-    function resizeCanvas() {
-      if (!video.videoWidth) return;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-    }
+        audio: false
 
-    function detect() {
-      if (!running || !detector || video.readyState < 2) {
-        if (running) requestAnimationFrame(detect);
-        return;
-      }
+      });
 
-      resizeCanvas();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      try {
-        const result = detector.detectForVideo(video, performance.now());
-        const faces = result.detections || [];
+    video.srcObject =
+      stream;
 
-        count.textContent = "Yüz: " + faces.length;
+    await video.play();
 
-        for (const face of faces) {
-          const box = face.boundingBox;
-          if (!box) continue;
 
-          ctx.strokeStyle = "#00ff88";
-          ctx.lineWidth = Math.max(3, canvas.width / 300);
-          ctx.strokeRect(box.originX, box.originY, box.width, box.height);
+    running =
+      true;
 
-          ctx.fillStyle = "#00ff88";
-          ctx.font = `${Math.max(18, canvas.width / 35)}px Arial`;
-          ctx.fillText(
-            "Yüz",
-            box.originX,
-            Math.max(25, box.originY - 8)
-          );
-        }
+    startBtn.disabled =
+      true;
 
-        status.textContent = faces.length
-          ? "🟢 Yüz algılandı!"
-          : "🔎 Yüz aranıyor...";
-      } catch (error) {
-        console.error(error);
-        showError("Yüz algılama sırasında hata oluştu.");
-      }
+    stopBtn.disabled =
+      false;
 
-      requestAnimationFrame(detect);
-    }
 
-    startBtn.addEventListener("click", startCamera);
+    addStatus(
+      "Kamera",
+      true,
+      "Kamera çalışıyor"
+    );
 
-    if (location.protocol !== "https:" && location.hostname !== "localhost") {
-      status.textContent =
-        "⚠️ Uyarı: Sayfa HTTPS üzerinden çalışmıyor.\n" +
-        "GitHub Pages kullanıyorsan adresin https:// ile başlamalı.";
-    }
 
-    if (!navigator.mediaDevices?.getUserMedia) {
-      showError("Bu tarayıcı kamera erişimini desteklemiyor.");
+    status.textContent =
+      "🟢 Kamera açık\n\n" +
+      "Yüz aranıyor...";
+
+
+    requestAnimationFrame(
+      detectLoop
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    addStatus(
+      "Kamera",
+      false,
+      error.message
+    );
+
+
+    if (
+      error.name ===
+      "NotAllowedError"
+    ) {
+
+      showError(
+        "Kamera izni reddedildi.\n\n" +
+        "Safari/GitHub Pages kamera iznini kontrol et."
+      );
+
     } else {
-      loadModel();
+
+      showError(
+        "Kamera açılamadı:\n\n" +
+        error.message
+      );
+
     }
-  </script>
+
+  }
+
+}
+
+
+/* =========================================================
+   KAMERA DURDUR
+========================================================= */
+
+function stopCamera() {
+
+  running =
+    false;
+
+
+  if (stream) {
+
+    stream
+      .getTracks()
+      .forEach(track =>
+        track.stop()
+      );
+
+  }
+
+
+  stream =
+    null;
+
+  video.srcObject =
+    null;
+
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  faceCount.textContent =
+    "0";
+
+  fpsElement.textContent =
+    "0";
+
+  confidenceElement.textContent =
+    "0%";
+
+  positionElement.textContent =
+    "—";
+
+
+  startBtn.disabled =
+    false;
+
+  stopBtn.disabled =
+    true;
+
+
+  status.textContent =
+    "⏸️ Kamera durduruldu.";
+
+}
+
+
+/* =========================================================
+   YÜZ ALGILAMA
+========================================================= */
+
+function detectLoop() {
+
+  if (!running) {
+    return;
+  }
+
+
+  if (
+    video.readyState < 2
+  ) {
+
+    requestAnimationFrame(
+      detectLoop
+    );
+
+    return;
+
+  }
+
+
+  canvas.width =
+    video.videoWidth;
+
+  canvas.height =
+    video.videoHeight;
+
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  try {
+
+    const result =
+      detector.detectForVideo(
+        video,
+        performance.now()
+      );
+
+
+    const faces =
+      result.detections || [];
+
+
+    faceCount.textContent =
+      faces.length;
+
+
+    let highestConfidence =
+      0;
+
+
+    /* ---------- YÜZLER ---------- */
+
+    for (
+      const face of faces
+    ) {
+
+      const box =
+        face.boundingBox;
+
+
+      if (!box) {
+        continue;
+      }
+
+
+      const confidence =
+        face.categories?.[0]?.score || 0;
+
+
+      highestConfidence =
+        Math.max(
+          highestConfidence,
+          confidence
+        );
+
+
+      /* ---------- KUTU ---------- */
+
+      ctx.strokeStyle =
+        "#00ff88";
+
+      ctx.lineWidth =
+        Math.max(
+          3,
+          canvas.width / 300
+        );
+
+
+      ctx.strokeRect(
+        box.originX,
+        box.originY,
+        box.width,
+        box.height
+      );
+
+
+      /* ---------- GÜVEN ---------- */
+
+      ctx.fillStyle =
+        "#00ff88";
+
+      ctx.font =
+        `${Math.max(
+          16,
+          canvas.width / 40
+        )}px Arial`;
+
+
+      ctx.fillText(
+        Math.round(
+          confidence * 100
+        ) + "%",
+        box.originX,
+        Math.max(
+          22,
+          box.originY - 8
+        )
+      );
+
+
+      /* ---------- MERKEZ ---------- */
+
+      const centerX =
+        Math.round(
+          box.originX +
+          box.width / 2
+        );
+
+      const centerY =
+        Math.round(
+          box.originY +
+          box.height / 2
+        );
+
+
+      positionElement.textContent =
+        centerX +
+        ", " +
+        centerY;
+
+    }
+
+
+    confidenceElement.textContent =
+      Math.round(
+        highestConfidence * 100
+      ) + "%";
+
+
+    /* ---------- FPS ---------- */
+
+    frameCounter++;
+
+
+    const now =
+      performance.now();
+
+
+    if (
+      now - lastFpsTime >=
+      1000
+    ) {
+
+      fpsElement.textContent =
+        frameCounter;
+
+      frameCounter =
+        0;
+
+      lastFpsTime =
+        now;
+
+    }
+
+
+    status.textContent =
+      faces.length > 0
+        ? "🟢 Yüz algılandı!"
+        : "🔎 Yüz aranıyor...";
+
+
+  } catch (error) {
+
+    console.error(
+      "ALGILAMA HATASI:",
+      error
+    );
+
+    addStatus(
+      "Yüz algılama",
+      false,
+      error.message
+    );
+
+    showError(
+      "Yüz algılama sırasında hata oluştu:\n\n" +
+      error.message
+    );
+
+    running =
+      false;
+
+    return;
+
+  }
+
+
+  requestAnimationFrame(
+    detectLoop
+  );
+
+}
+
+
+/* =========================================================
+   BUTONLAR
+========================================================= */
+
+startBtn.addEventListener(
+  "click",
+  startCamera
+);
+
+stopBtn.addEventListener(
+  "click",
+  stopCamera
+);
+
+
+/* =========================================================
+   BAŞLANGIÇ KONTROLLERİ
+========================================================= */
+
+if (
+  location.protocol === "https:" ||
+  location.hostname === "localhost"
+) {
+
+  addStatus(
+    "HTTPS",
+    true,
+    "Güvenli bağlantı"
+  );
+
+} else {
+
+  addStatus(
+    "HTTPS",
+    false,
+    "Kamera için HTTPS gerekli"
+  );
+
+}
+
+
+if (
+  navigator.mediaDevices?.getUserMedia
+) {
+
+  addStatus(
+    "Kamera API",
+    true,
+    "Tarayıcı destekliyor"
+  );
+
+} else {
+
+  addStatus(
+    "Kamera API",
+    false,
+    "Tarayıcı desteklemiyor"
+  );
+
+}
+
+
+/* =========================================================
+   BAŞLAT
+========================================================= */
+
+loadAI();
+
+</script>
+
 </body>
 </html>
