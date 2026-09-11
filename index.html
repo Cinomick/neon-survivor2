@@ -1,150 +1,165 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#080b14">
-  <title>AI Yüz Algılama</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080b14">
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<title>AI Yüz Algılama</title>
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #080b14;
-      color: white;
-      font-family: Arial, sans-serif;
-      padding: 18px;
-    }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-    .app {
-      width: min(900px, 100%);
-      margin: auto;
-      text-align: center;
-    }
+body {
+  margin: 0;
+  padding: 18px;
+  min-height: 100vh;
+  background: #080b14;
+  color: white;
+  font-family: Arial, sans-serif;
+}
 
-    h1 {
-      margin: 0 0 8px;
-    }
+.app {
+  width: min(900px, 100%);
+  margin: auto;
+  text-align: center;
+}
 
-    p {
-      color: #9faac3;
-      margin-top: 0;
-    }
+h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+}
 
-    .camera {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 10;
-      background: #02040a;
-      border: 1px solid #29334d;
-      border-radius: 18px;
-      overflow: hidden;
-    }
+.subtitle {
+  color: #9faac3;
+  margin-bottom: 22px;
+}
 
-    video,
-    canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1);
-    }
+.camera {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #02040a;
+  border: 1px solid #29334d;
+  border-radius: 18px;
+  overflow: hidden;
+}
 
-    canvas {
-      pointer-events: none;
-    }
+video,
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-    .status {
-      margin: 14px 0;
-      padding: 14px;
-      background: #151b2c;
-      border-radius: 12px;
-      text-align: left;
-      white-space: pre-wrap;
-      line-height: 1.5;
-    }
+video {
+  transform: scaleX(-1);
+}
 
-    .buttons {
-      display: flex;
-      gap: 10px;
-    }
+canvas {
+  pointer-events: none;
+  transform: scaleX(-1);
+}
 
-    button {
-      flex: 1;
-      border: 0;
-      border-radius: 12px;
-      padding: 14px;
-      background: #6575ff;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-    }
+.status {
+  margin-top: 14px;
+  padding: 16px;
+  background: #151b2c;
+  border-radius: 14px;
+  text-align: left;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
 
-    button.secondary {
-      background: #252d42;
-    }
+.buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
 
-    button:disabled {
-      opacity: 0.45;
-    }
+button {
+  flex: 1;
+  border: 0;
+  border-radius: 12px;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background: #5365ff;
+}
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-top: 14px;
-    }
+button.secondary {
+  background: #252d42;
+}
 
-    .stat {
-      background: #11182a;
-      border-radius: 12px;
-      padding: 12px;
-    }
+button:disabled {
+  opacity: 0.4;
+}
 
-    .stat b {
-      display: block;
-      font-size: 20px;
-    }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
 
-    .stat span {
-      color: #9faac3;
-      font-size: 12px;
-    }
+.stat {
+  background: #11182a;
+  border-radius: 14px;
+  padding: 16px;
+}
 
-    .diagnostics {
-      margin-top: 14px;
-      padding: 14px;
-      background: #0e1422;
-      border: 1px solid #202a40;
-      border-radius: 14px;
-      text-align: left;
-    }
+.stat b {
+  display: block;
+  font-size: 25px;
+  margin-bottom: 5px;
+}
 
-    .diagnostics h2 {
-      font-size: 16px;
-      margin: 0 0 10px;
-    }
+.stat span {
+  color: #9faac3;
+}
 
-    pre {
-      margin: 0;
-      white-space: pre-wrap;
-      color: #cdd6ec;
-      font-family: monospace;
-      font-size: 12px;
-      line-height: 1.6;
-    }
+.diagnostics {
+  margin-top: 14px;
+  padding: 16px;
+  background: #0e1422;
+  border: 1px solid #202a40;
+  border-radius: 14px;
+  text-align: left;
+}
 
-    @media (max-width: 600px) {
-      .stats {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-  </style>
+.diagnostics h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #cdd6ec;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.good {
+  color: #9dffca;
+}
+
+.bad {
+  color: #ff9b9b;
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 27px;
+  }
+}
+</style>
 </head>
 
 <body>
@@ -152,25 +167,39 @@
 <div class="app">
 
   <h1>🤖 AI Yüz Algılama</h1>
-  <p>Gerçek zamanlı yüz algılama sistemi</p>
+
+  <div class="subtitle">
+    Gerçek zamanlı yüz algılama sistemi
+  </div>
 
   <div class="camera">
-    <video id="video" autoplay playsinline muted></video>
+    <video
+      id="video"
+      autoplay
+      muted
+      playsinline>
+    </video>
+
     <canvas id="canvas"></canvas>
   </div>
 
   <div id="status" class="status">
-    ⏳ Sistem başlatılıyor...
+    ⏳ Sistem kontrol ediliyor...
   </div>
 
   <div class="buttons">
+
     <button id="startBtn" disabled>
-      Kamerayı Başlat
+      📷 Kamerayı Başlat
     </button>
 
-    <button id="stopBtn" class="secondary" disabled>
-      Kamerayı Durdur
+    <button
+      id="stopBtn"
+      class="secondary"
+      disabled>
+      ⏹ Kamerayı Durdur
     </button>
+
   </div>
 
   <div class="stats">
@@ -210,25 +239,11 @@ Başlatılıyor...
 </div>
 
 
-<script type="module">
+<script>
 
-/* =========================================================
-   AYARLAR
-========================================================= */
-
-const MEDIAPIPE_URL =
-  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm";
-
-const WASM_URL =
-  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
-
-const MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-models/face_detector/face_detector/short_range/float16/1/face_detector.tflite";
-
-
-/* =========================================================
+/* =====================================================
    ELEMENTLER
-========================================================= */
+===================================================== */
 
 const video =
   document.getElementById("video");
@@ -241,9 +256,6 @@ const ctx =
 
 const status =
   document.getElementById("status");
-
-const diagnostics =
-  document.getElementById("diagnostics");
 
 const startBtn =
   document.getElementById("startBtn");
@@ -263,269 +275,227 @@ const confidenceElement =
 const positionElement =
   document.getElementById("position");
 
+const diagnostics =
+  document.getElementById("diagnostics");
 
-/* =========================================================
+
+/* =====================================================
    DEĞİŞKENLER
-========================================================= */
-
-let FaceDetector = null;
-let FilesetResolver = null;
+===================================================== */
 
 let detector = null;
+
 let stream = null;
 
 let running = false;
 
-let frameCounter = 0;
-let lastFpsTime = performance.now();
+let frameCount = 0;
+
+let lastFpsTime =
+  performance.now();
 
 
-/* =========================================================
-   DURUM SİSTEMİ
-========================================================= */
+/* =====================================================
+   DURUM
+===================================================== */
 
-const systemStatus = [];
+const system = {};
 
 
-function addStatus(name, success, detail = "") {
+function setSystem(
+  name,
+  success,
+  message
+) {
 
-  const existing =
-    systemStatus.find(x => x.name === name);
+  system[name] = {
+    success,
+    message
+  };
 
-  if (existing) {
+  renderSystem();
 
-    existing.success = success;
-    existing.detail = detail;
+}
 
-  } else {
 
-    systemStatus.push({
-      name,
-      success,
-      detail
-    });
+function renderSystem() {
+
+  const lines = [];
+
+  for (
+    const [name, item]
+    of Object.entries(system)
+  ) {
+
+    lines.push(
+      (
+        item.success
+          ? "✅ "
+          : "❌ "
+      ) +
+      name +
+      " — " +
+      item.message
+    );
 
   }
 
-  renderDiagnostics();
-}
-
-
-function renderDiagnostics() {
-
   diagnostics.textContent =
-    systemStatus
-      .map(item => {
-
-        const icon =
-          item.success ? "✅" : "❌";
-
-        return (
-          icon +
-          " " +
-          item.name +
-          (
-            item.detail
-              ? " — " + item.detail
-              : ""
-          )
-        );
-
-      })
-      .join("\n");
+    lines.join("\n");
 
 }
 
 
-/* =========================================================
-   HATA
-========================================================= */
+/* =====================================================
+   TARAYICI KONTROLÜ
+===================================================== */
 
-function showError(message) {
+function checkBrowser() {
 
-  status.textContent =
-    "❌ HATA\n\n" + message;
+  if (
+    location.protocol === "https:" ||
+    location.hostname === "localhost"
+  ) {
 
-  status.style.color =
-    "#ff9b9b";
+    setSystem(
+      "HTTPS",
+      true,
+      "Güvenli bağlantı"
+    );
 
-}
+  } else {
 
+    setSystem(
+      "HTTPS",
+      false,
+      "HTTPS gerekli"
+    );
 
-/* =========================================================
-   AI MODELİNİ YÜKLE
-========================================================= */
-
-async function loadAI() {
-
-  try {
-
-    status.textContent =
-      "⏳ 1/4 MediaPipe yükleniyor...";
-
-
-    /* ---------- MEDIAPIPE ---------- */
-
-    try {
-
-      const vision =
-        await import(MEDIAPIPE_URL);
-
-      FaceDetector =
-        vision.FaceDetector;
-
-      FilesetResolver =
-        vision.FilesetResolver;
-
-      if (
-        !FaceDetector ||
-        !FilesetResolver
-      ) {
-
-        throw new Error(
-          "MediaPipe sınıfları bulunamadı."
-        );
-
-      }
-
-      addStatus(
-        "MediaPipe",
-        true,
-        "Kütüphane yüklendi"
-      );
-
-    } catch (error) {
-
-      addStatus(
-        "MediaPipe",
-        false,
-        error.message
-      );
-
-      throw error;
-    }
+  }
 
 
-    /* ---------- WASM ---------- */
+  if (
+    navigator.mediaDevices &&
+    navigator.mediaDevices.getUserMedia
+  ) {
 
-    status.textContent =
-      "⏳ 2/4 WebAssembly motoru yükleniyor...";
+    setSystem(
+      "Kamera API",
+      true,
+      "Tarayıcı destekliyor"
+    );
 
+  } else {
 
-    try {
+    setSystem(
+      "Kamera API",
+      false,
+      "getUserMedia bulunamadı"
+    );
 
-      const fileset =
-        await FilesetResolver.forVisionTasks(
-          WASM_URL
-        );
-
-      window.__visionFileset =
-        fileset;
-
-      addStatus(
-        "WebAssembly",
-        true,
-        "AI çalışma motoru hazır"
-      );
-
-    } catch (error) {
-
-      addStatus(
-        "WebAssembly",
-        false,
-        error.message
-      );
-
-      throw error;
-    }
+  }
 
 
-    /* ---------- MODEL ---------- */
+  /*
+  Yerleşik FaceDetector
+  */
 
-    status.textContent =
-      "⏳ 3/4 Yüz modeli yükleniyor...";
+  if (
+    "FaceDetector" in window
+  ) {
 
+    setSystem(
+      "FaceDetector",
+      true,
+      "Tarayıcı yerleşik yüz algılamayı destekliyor"
+    );
 
     try {
 
       detector =
-        await FaceDetector.createFromOptions(
-          window.__visionFileset,
-          {
+        new FaceDetector({
+          fastMode: true,
+          maxDetectedFaces: 10
+        });
 
-            baseOptions: {
-
-              modelAssetPath:
-                MODEL_URL
-
-            },
-
-            runningMode:
-              "VIDEO",
-
-            minDetectionConfidence:
-              0.5
-
-          }
-        );
-
-      addStatus(
-        "Yüz modeli",
+      setSystem(
+        "FaceDetector motoru",
         true,
-        "Model başarıyla hazır"
+        "Motor oluşturuldu"
       );
 
-    } catch (error) {
+      startBtn.disabled =
+        false;
 
-      addStatus(
-        "Yüz modeli",
+      status.textContent =
+        "✅ AI yüz algılama hazır!\n\n" +
+        "Kamerayı başlatabilirsin.";
+
+      status.className =
+        "status good";
+
+    }
+
+    catch (error) {
+
+      setSystem(
+        "FaceDetector motoru",
         false,
         error.message
       );
 
-      throw error;
+      showError(
+        "Yüz algılama motoru oluşturulamadı."
+      );
+
     }
 
+  }
 
-    /* ---------- TAMAMLANDI ---------- */
+  else {
+
+    setSystem(
+      "FaceDetector",
+      false,
+      "Bu ortam yerleşik FaceDetector API'sini desteklemiyor"
+    );
+
 
     status.textContent =
-      "✅ 4/4 AI sistemi hazır!\n\n" +
-      "Kamerayı başlatabilirsin.";
+      "⚠️ Tarayıcı desteği yok.\n\n" +
+      "Bu önizleme ortamında yerleşik " +
+      "FaceDetector API bulunamadı.\n\n" +
+      "Kamera sistemi yine test edilebilir, " +
+      "ancak gerçek AI yüz algılama için " +
+      "harici veya yerel bir AI modeli gerekir.";
 
-    status.style.color =
-      "#9dffca";
-
-    addStatus(
-      "AI sistemi",
-      true,
-      "Çalışmaya hazır"
-    );
-
-    startBtn.disabled =
-      false;
-
-  } catch (error) {
-
-    console.error(
-      "AI BAŞLATMA HATASI:",
-      error
-    );
-
-    showError(
-      "AI sistemi başlatılamadı.\n\n" +
-      "Teknik hata:\n" +
-      (error?.message || error)
-    );
+    status.className =
+      "status";
 
   }
 
 }
 
 
-/* =========================================================
+/* =====================================================
+   HATA
+===================================================== */
+
+function showError(message) {
+
+  status.textContent =
+    "❌ HATA\n\n" +
+    message;
+
+  status.className =
+    "status bad";
+
+}
+
+
+/* =====================================================
    KAMERA
-========================================================= */
+===================================================== */
 
 async function startCamera() {
 
@@ -537,7 +507,7 @@ async function startCamera() {
     ) {
 
       throw new Error(
-        "Bu tarayıcı kamera erişimini desteklemiyor."
+        "Kamera API desteklenmiyor."
       );
 
     }
@@ -551,19 +521,13 @@ async function startCamera() {
       await navigator.mediaDevices.getUserMedia({
 
         video: {
-
-          facingMode: {
-            ideal: "user"
-          },
-
+          facingMode: "user",
           width: {
             ideal: 1280
           },
-
           height: {
             ideal: 720
           }
-
         },
 
         audio: false
@@ -574,11 +538,13 @@ async function startCamera() {
     video.srcObject =
       stream;
 
+
     await video.play();
 
 
     running =
       true;
+
 
     startBtn.disabled =
       true;
@@ -587,7 +553,7 @@ async function startCamera() {
       false;
 
 
-    addStatus(
+    setSystem(
       "Kamera",
       true,
       "Kamera çalışıyor"
@@ -603,45 +569,29 @@ async function startCamera() {
       detectLoop
     );
 
+  }
 
-  } catch (error) {
+  catch (error) {
 
-    console.error(error);
-
-    addStatus(
+    setSystem(
       "Kamera",
       false,
       error.message
     );
 
-
-    if (
-      error.name ===
-      "NotAllowedError"
-    ) {
-
-      showError(
-        "Kamera izni reddedildi.\n\n" +
-        "Safari/GitHub Pages kamera iznini kontrol et."
-      );
-
-    } else {
-
-      showError(
-        "Kamera açılamadı:\n\n" +
-        error.message
-      );
-
-    }
+    showError(
+      "Kamera açılamadı:\n\n" +
+      error.message
+    );
 
   }
 
 }
 
 
-/* =========================================================
+/* =====================================================
    KAMERA DURDUR
-========================================================= */
+===================================================== */
 
 function stopCamera() {
 
@@ -653,8 +603,8 @@ function stopCamera() {
 
     stream
       .getTracks()
-      .forEach(track =>
-        track.stop()
+      .forEach(
+        track => track.stop()
       );
 
   }
@@ -701,11 +651,11 @@ function stopCamera() {
 }
 
 
-/* =========================================================
+/* =====================================================
    YÜZ ALGILAMA
-========================================================= */
+===================================================== */
 
-function detectLoop() {
+async function detectLoop() {
 
   if (!running) {
     return;
@@ -742,29 +692,23 @@ function detectLoop() {
 
   try {
 
-    const result =
-      detector.detectForVideo(
-        video,
-        performance.now()
-      );
-
-
     const faces =
-      result.detections || [];
+      await detector.detect(
+        video
+      );
 
 
     faceCount.textContent =
       faces.length;
 
 
-    let highestConfidence =
+    let highest =
       0;
 
 
-    /* ---------- YÜZLER ---------- */
-
     for (
-      const face of faces
+      const face
+      of faces
     ) {
 
       const box =
@@ -776,72 +720,38 @@ function detectLoop() {
       }
 
 
-      const confidence =
-        face.categories?.[0]?.score || 0;
-
-
-      highestConfidence =
-        Math.max(
-          highestConfidence,
-          confidence
-        );
-
-
-      /* ---------- KUTU ---------- */
+      /*
+      Yüz kutusu
+      */
 
       ctx.strokeStyle =
         "#00ff88";
 
       ctx.lineWidth =
-        Math.max(
-          3,
-          canvas.width / 300
-        );
+        4;
 
 
       ctx.strokeRect(
-        box.originX,
-        box.originY,
+        box.x,
+        box.y,
         box.width,
         box.height
       );
 
 
-      /* ---------- GÜVEN ---------- */
-
-      ctx.fillStyle =
-        "#00ff88";
-
-      ctx.font =
-        `${Math.max(
-          16,
-          canvas.width / 40
-        )}px Arial`;
-
-
-      ctx.fillText(
-        Math.round(
-          confidence * 100
-        ) + "%",
-        box.originX,
-        Math.max(
-          22,
-          box.originY - 8
-        )
-      );
-
-
-      /* ---------- MERKEZ ---------- */
+      /*
+      Merkez
+      */
 
       const centerX =
         Math.round(
-          box.originX +
+          box.x +
           box.width / 2
         );
 
       const centerY =
         Math.round(
-          box.originY +
+          box.y +
           box.height / 2
         );
 
@@ -851,33 +761,71 @@ function detectLoop() {
         ", " +
         centerY;
 
+
+      /*
+      Yerleşik FaceDetector
+      confidence vermiyorsa
+      kutu varlığını gösteriyoruz.
+      */
+
+      highest =
+        Math.max(
+          highest,
+          1
+        );
+
+
+      /*
+      Etiket
+      */
+
+      ctx.fillStyle =
+        "#00ff88";
+
+      ctx.font =
+        "bold 18px Arial";
+
+      ctx.fillText(
+        "YÜZ",
+        box.x,
+        Math.max(
+          22,
+          box.y - 8
+        )
+      );
+
     }
 
 
     confidenceElement.textContent =
-      Math.round(
-        highestConfidence * 100
-      ) + "%";
+      faces.length
+        ? "Algılandı"
+        : "0%";
 
 
-    /* ---------- FPS ---------- */
+    /*
+    FPS
+    */
 
-    frameCounter++;
-
+    frameCount++;
 
     const now =
       performance.now();
 
+    const elapsed =
+      now - lastFpsTime;
 
-    if (
-      now - lastFpsTime >=
-      1000
-    ) {
+
+    if (elapsed >= 1000) {
 
       fpsElement.textContent =
-        frameCounter;
+        Math.round(
+          frameCount /
+          (elapsed / 1000)
+        );
 
-      frameCounter =
+
+      frameCount =
         0;
 
       lastFpsTime =
@@ -885,35 +833,20 @@ function detectLoop() {
 
     }
 
+  }
 
-    status.textContent =
-      faces.length > 0
-        ? "🟢 Yüz algılandı!"
-        : "🔎 Yüz aranıyor...";
-
-
-  } catch (error) {
+  catch (error) {
 
     console.error(
-      "ALGILAMA HATASI:",
+      "Yüz algılama:",
       error
     );
 
-    addStatus(
+    setSystem(
       "Yüz algılama",
       false,
       error.message
     );
-
-    showError(
-      "Yüz algılama sırasında hata oluştu:\n\n" +
-      error.message
-    );
-
-    running =
-      false;
-
-    return;
 
   }
 
@@ -925,9 +858,9 @@ function detectLoop() {
 }
 
 
-/* =========================================================
+/* =====================================================
    BUTONLAR
-========================================================= */
+===================================================== */
 
 startBtn.addEventListener(
   "click",
@@ -940,58 +873,11 @@ stopBtn.addEventListener(
 );
 
 
-/* =========================================================
-   BAŞLANGIÇ KONTROLLERİ
-========================================================= */
-
-if (
-  location.protocol === "https:" ||
-  location.hostname === "localhost"
-) {
-
-  addStatus(
-    "HTTPS",
-    true,
-    "Güvenli bağlantı"
-  );
-
-} else {
-
-  addStatus(
-    "HTTPS",
-    false,
-    "Kamera için HTTPS gerekli"
-  );
-
-}
-
-
-if (
-  navigator.mediaDevices?.getUserMedia
-) {
-
-  addStatus(
-    "Kamera API",
-    true,
-    "Tarayıcı destekliyor"
-  );
-
-} else {
-
-  addStatus(
-    "Kamera API",
-    false,
-    "Tarayıcı desteklemiyor"
-  );
-
-}
-
-
-/* =========================================================
+/* =====================================================
    BAŞLAT
-========================================================= */
+===================================================== */
 
-loadAI();
+checkBrowser();
 
 </script>
 
