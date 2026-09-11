@@ -1,2991 +1,2060 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<meta
-    name="viewport"
-    content="width=device-width,
-             initial-scale=1,
-             viewport-fit=cover">
+  <title>Neon Face Swap</title>
 
-<title>AI Face Swap</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js"
+          crossorigin="anonymous"></script>
 
-<script
-src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
-crossorigin="anonymous">
-</script>
-
-<style>
-
-*{
-    box-sizing:border-box;
-}
-
-body{
-    margin:0;
-    padding:14px;
-
-    background:#060a14;
-    color:#fff;
-
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-}
-
-.app{
-    max-width:1000px;
-    margin:auto;
-}
-
-h1{
-    text-align:center;
-    margin:5px 0;
-
-    font-size:
-        clamp(28px,7vw,44px);
-
-    background:
-        linear-gradient(
-            90deg,
-            #9678ff,
-            #42ddff
-        );
-
-    -webkit-background-clip:text;
-    color:transparent;
-}
-
-.subtitle{
-    text-align:center;
-    color:#95a2bb;
-    margin-bottom:15px;
-}
-
-.stage{
-    position:relative;
-
-    width:100%;
-    aspect-ratio:16/10;
-
-    background:#01040a;
-
-    border:
-        1px solid #293858;
-
-    border-radius:20px;
-
-    overflow:hidden;
-}
-
-#canvas{
-    width:100%;
-    height:100%;
-    display:block;
-}
-
-video,
-img{
-    display:none;
-}
-
-.grid{
-    display:grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap:10px;
-
-    margin-top:12px;
-}
-
-.card{
-    background:#10182a;
-
-    border:
-        1px solid #293858;
-
-    border-radius:16px;
-
-    padding:14px;
-}
-
-.card h2{
-    margin:
-        0 0 11px;
-
-    font-size:17px;
-}
-
-button,
-.fileButton{
-
-    width:100%;
-
-    border:0;
-
-    border-radius:12px;
-
-    padding:15px;
-
-    color:white;
-
-    font-size:15px;
-
-    font-weight:800;
-
-    cursor:pointer;
-
-    text-align:center;
-
-    background:#5368ff;
-}
-
-.fileButton{
-    display:block;
-    background:#784cff;
-}
-
-input{
-    display:none;
-}
-
-.green{
-    background:#10c978 !important;
-}
-
-.orange{
-    background:#d88a28 !important;
-}
-
-.gray{
-    background:#28354d !important;
-}
-
-button:disabled{
-    opacity:.4;
-    cursor:not-allowed;
-}
-
-.status{
-    margin-top:12px;
-
-    padding:15px;
-
-    background:#10182a;
-
-    border:
-        1px solid #293858;
-
-    border-radius:14px;
-
-    line-height:1.5;
-
-    white-space:pre-wrap;
-}
-
-.success{
-    color:#70ffb8;
-}
-
-.error{
-    color:#ff98a6;
-}
-
-.info{
-    color:#a4b0c6;
-}
-
-.infoBox{
-    margin-top:10px;
-
-    padding:12px;
-
-    background:#0b1322;
-
-    border-radius:12px;
-
-    color:#8f9cb4;
-
-    font-size:12px;
-
-    line-height:1.5;
-}
-
-.steps{
-
-    display:grid;
-
-    grid-template-columns:
-        repeat(5,1fr);
-
-    gap:6px;
-
-    margin-top:12px;
-}
-
-.step{
-
-    background:#0e1626;
-
-    padding:9px 4px;
-
-    border-radius:9px;
-
-    text-align:center;
-
-    color:#74829c;
-
-    font-size:10px;
-}
-
-.step.active{
-
-    color:#fff;
-
-    outline:
-        1px solid #46d9ff;
-}
-
-.step.done{
-
-    color:#70ffb8;
-}
-
-.stats{
-
-    display:grid;
-
-    grid-template-columns:
-        repeat(4,1fr);
-
-    gap:8px;
-
-    margin-top:12px;
-}
-
-.stat{
-
-    background:#0e1627;
-
-    padding:12px;
-
-    border-radius:13px;
-
-    text-align:center;
-}
-
-.stat b{
-
-    display:block;
-
-    font-size:21px;
-}
-
-.stat span{
-
-    color:#8997b0;
-
-    font-size:11px;
-}
-
-@media(max-width:700px){
-
-    .grid{
-        grid-template-columns:1fr;
+  <style>
+    * {
+      box-sizing: border-box;
     }
 
-    .stats{
-        grid-template-columns:
-            repeat(2,1fr);
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, #17233d 0%, #080b13 55%, #05070c 100%);
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      padding: 18px;
     }
 
-}
+    .app {
+      width: min(100%, 900px);
+    }
 
-</style>
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #aeb8cc;
+      margin-bottom: 18px;
+    }
+
+    .panel {
+      background: rgba(15, 20, 32, .92);
+      border: 1px solid #27344f;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 15px 40px rgba(0,0,0,.25);
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #34425e;
+      background: #0b101b;
+      color: white;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 15px;
+      margin-top: 10px;
+      background: #1f6feb;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background: #263148;
+    }
+
+    button.success {
+      background: #16875b;
+    }
+
+    button.warning {
+      background: #a86b15;
+    }
+
+    .viewer {
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      background: #02040a;
+      border: 1px solid #26334d;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    video,
+    #sourceImage {
+      display: none;
+    }
+
+    .status {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #0b111d;
+      border: 1px solid #27344f;
+      color: #d9e1f0;
+      line-height: 1.45;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .stat {
+      background: #0b111d;
+      border: 1px solid #26334d;
+      padding: 10px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 18px;
+    }
+
+    .stat span {
+      color: #8e9bb3;
+      font-size: 12px;
+    }
+
+    .calibration {
+      display: none;
+      margin-top: 12px;
+      padding: 13px;
+      border-radius: 12px;
+      background: #111a2b;
+      border: 1px solid #36517d;
+    }
+
+    .calibration.active {
+      display: block;
+    }
+
+    .step {
+      margin-top: 5px;
+      color: #9fb0ca;
+    }
+
+    .error {
+      color: #ff8e8e;
+    }
+
+    .ok {
+      color: #73e6a8;
+    }
+
+    .warningText {
+      color: #ffd27a;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+
+      h1 {
+        font-size: 23px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
 <div class="app">
 
-<h1>🤖 AI Face Swap</h1>
+  <h1>🧠 Neon Face Swap</h1>
+  <div class="subtitle">
+    Kaynak yüzünü analiz et → kamerayı aç → mimik kalibrasyonu yap → canlı dene.
+  </div>
 
-<div class="subtitle">
-478 nokta • mimik kalibrasyonu • canlı yüz takibi
-</div>
+  <div class="panel">
 
+    <label for="photo">
+      1️⃣ Kaynak yüz fotoğrafı
+    </label>
 
-<!-- ==================================================
-     GÖRÜNTÜ
-================================================== -->
+    <input
+      id="photo"
+      type="file"
+      accept="image/*"
+    >
 
-<div class="stage">
+    <button id="analyze" disabled>
+      🔍 Kaynak Yüzü Analiz Et
+    </button>
 
+    <div id="photoStatus" class="status">
+      Henüz fotoğraf seçilmedi.
+    </div>
+
+  </div>
+
+  <div class="panel">
+
+    <label>
+      2️⃣ Kamera
+    </label>
+
+    <button id="openCamera" class="secondary">
+      📷 Kamerayı Aç
+    </button>
+
+    <button id="stopCamera" class="secondary" disabled>
+      ⛔ Kamerayı Durdur
+    </button>
+
+  </div>
+
+  <div class="viewer">
+    <video id="video" playsinline muted></video>
     <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="panel">
+
+    <div class="stats">
+      <div class="stat">
+        <b id="faceCount">0</b>
+        <span>Yüz</span>
+      </div>
+
+      <div class="stat">
+        <b id="landmarkCount">0</b>
+        <span>Landmark</span>
+      </div>
+
+      <div class="stat">
+        <b id="fps">0</b>
+        <span>FPS</span>
+      </div>
+    </div>
+
+    <button id="calibrate" class="warning" disabled>
+      🎯 Mimik Kalibrasyonunu Başlat
+    </button>
+
+    <div id="calibration" class="calibration">
+
+      <strong id="calTitle">
+        Kalibrasyon
+      </strong>
+
+      <div id="calDescription" class="step">
+        -
+      </div>
+
+      <button id="savePose">
+        ✓ Bu Pozu Kaydet
+      </button>
+
+    </div>
+
+    <button id="swap" class="success" disabled>
+      🪄 Face Swap'ı Başlat
+    </button>
+
+    <div id="status" class="status">
+      Sistem başlatılıyor...
+    </div>
+
+  </div>
 
 </div>
 
-
-<video
-    id="camera"
-    autoplay
-    muted
-    playsinline>
-</video>
-
-
-<img
-    id="sourceImage"
-    alt="Kaynak yüz">
-
-
-<!-- ==================================================
-     ADIMLAR
-================================================== -->
-
-<div class="steps">
-
-<div
-    id="step0"
-    class="step active">
-
-    1<br>
-    Fotoğraf
-
-</div>
-
-<div
-    id="step1"
-    class="step">
-
-    2<br>
-    Analiz
-
-</div>
-
-<div
-    id="step2"
-    class="step">
-
-    3<br>
-    Kalibrasyon
-
-</div>
-
-<div
-    id="step3"
-    class="step">
-
-    4<br>
-    Mimikler
-
-</div>
-
-<div
-    id="step4"
-    class="step">
-
-    5<br>
-    Canlı
-
-</div>
-
-</div>
-
-
-<!-- ==================================================
-     KAYNAK FOTOĞRAF
-================================================== -->
-
-<div class="grid">
-
-<div class="card">
-
-<h2>
-🖼️ 1. Kaynak yüz
-</h2>
-
-
-<label
-    class="fileButton"
-    for="photoInput">
-
-    📸 Fotoğraf Seç
-
-</label>
-
-
-<input
-    id="photoInput"
-    type="file"
-    accept="image/*">
-
-
-<div style="height:9px"></div>
-
-
-<button
-    id="analyzeButton"
-    disabled>
-
-    🔎 Kaynak Yüzü Analiz Et
-
-</button>
-
-
-<div
-    id="photoInfo"
-    class="infoBox">
-
-    Henüz fotoğraf seçilmedi.
-
-</div>
-
-</div>
-
-
-<!-- ==================================================
-     KAMERA
-================================================== -->
-
-<div class="card">
-
-<h2>
-📷 2. Kamera
-</h2>
-
-
-<button
-    id="cameraButton"
-    class="green">
-
-    📷 Kamerayı Aç
-
-</button>
-
-
-<div style="height:9px"></div>
-
-
-<button
-    id="stopButton"
-    class="gray"
-    disabled>
-
-    ⏹ Kamerayı Kapat
-
-</button>
-
-
-<div
-    id="cameraInfo"
-    class="infoBox">
-
-    Kamera henüz açılmadı.
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- ==================================================
-     KALİBRASYON
-================================================== -->
-
-<div class="grid">
-
-<div class="card">
-
-<h2>
-🧭 3. Kaynak mimiklerini kaydet
-</h2>
-
-
-<button
-    id="calibrationButton"
-    class="orange"
-    disabled>
-
-    🧭 Kalibrasyonu Başlat
-
-</button>
-
-
-<div
-    id="calibrationInfo"
-    class="infoBox">
-
-    Önce kaynak yüzünü analiz et.
-
-</div>
-
-</div>
-
-
-<div class="card">
-
-<h2>
-🔥 4. Canlı Face Swap
-</h2>
-
-
-<button
-    id="swapButton"
-    disabled>
-
-    🔥 Face Swap Başlat
-
-</button>
-
-
-<div
-    id="swapInfo"
-    class="infoBox">
-
-    Kalibrasyon tamamlanmadı.
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- ==================================================
-     DURUM
-================================================== -->
-
-<div
-    id="status"
-    class="status info">
-
-⏳ AI hazırlanıyor...
-
-</div>
-
-
-<!-- ==================================================
-     İSTATİSTİK
-================================================== -->
-
-<div class="stats">
-
-<div class="stat">
-
-<b id="faceCount">
-0
-</b>
-
-<span>
-Yüz
-</span>
-
-</div>
-
-
-<div class="stat">
-
-<b id="fps">
-0
-</b>
-
-<span>
-FPS
-</span>
-
-</div>
-
-
-<div class="stat">
-
-<b id="landmarks">
-0
-</b>
-
-<span>
-Landmark
-</span>
-
-</div>
-
-
-<div class="stat">
-
-<b id="expression">
-Nötr
-</b>
-
-<span>
-Mimik
-</span>
-
-</div>
-
-</div>
-
-
-<div class="infoBox">
-
-🔒 Görüntüler tarayıcı içinde işlenir.
-Yalnızca izinli fotoğraf ve kişilerle kullan.
-
-</div>
-
-</div>
-
+<img id="sourceImage" alt="Kaynak yüz">
 
 <script>
 
-/* =====================================================
+"use strict";
+
+/* =========================================================
    ELEMENTLER
-===================================================== */
+========================================================= */
 
-const canvas =
-    document.getElementById(
-        "canvas"
-    );
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-const ctx =
-    canvas.getContext("2d");
+const photo = document.getElementById("photo");
+const sourceImage = document.getElementById("sourceImage");
 
+const analyzeBtn = document.getElementById("analyze");
+const openCameraBtn = document.getElementById("openCamera");
+const stopCameraBtn = document.getElementById("stopCamera");
 
-const cameraVideo =
-    document.getElementById(
-        "camera"
-    );
+const calibrateBtn = document.getElementById("calibrate");
+const savePoseBtn = document.getElementById("savePose");
+const swapBtn = document.getElementById("swap");
 
+const statusBox = document.getElementById("status");
+const photoStatus = document.getElementById("photoStatus");
 
-const sourceImage =
-    document.getElementById(
-        "sourceImage"
-    );
+const calibrationBox = document.getElementById("calibration");
+const calTitle = document.getElementById("calTitle");
+const calDescription = document.getElementById("calDescription");
 
-
-const photoInput =
-    document.getElementById(
-        "photoInput"
-    );
-
-
-const analyzeButton =
-    document.getElementById(
-        "analyzeButton"
-    );
+const faceCountEl = document.getElementById("faceCount");
+const landmarkCountEl = document.getElementById("landmarkCount");
+const fpsEl = document.getElementById("fps");
 
 
-const cameraButton =
-    document.getElementById(
-        "cameraButton"
-    );
-
-
-const stopButton =
-    document.getElementById(
-        "stopButton"
-    );
-
-
-const calibrationButton =
-    document.getElementById(
-        "calibrationButton"
-    );
-
-
-const swapButton =
-    document.getElementById(
-        "swapButton"
-    );
-
-
-const status =
-    document.getElementById(
-        "status"
-    );
-
-
-const photoInfo =
-    document.getElementById(
-        "photoInfo"
-    );
-
-
-const cameraInfo =
-    document.getElementById(
-        "cameraInfo"
-    );
-
-
-const calibrationInfo =
-    document.getElementById(
-        "calibrationInfo"
-    );
-
-
-const swapInfo =
-    document.getElementById(
-        "swapInfo"
-    );
-
-
-const faceCount =
-    document.getElementById(
-        "faceCount"
-    );
-
-
-const fps =
-    document.getElementById(
-        "fps"
-    );
-
-
-const landmarksEl =
-    document.getElementById(
-        "landmarks"
-    );
-
-
-const expressionEl =
-    document.getElementById(
-        "expression"
-    );
-
-
-/* =====================================================
-   GLOBAL DURUM
-===================================================== */
+/* =========================================================
+   DURUM
+========================================================= */
 
 let cameraMesh = null;
-
 let sourceMesh = null;
 
-let mediaStream = null;
+let stream = null;
+let animationFrame = 0;
 
-let cameraRunning = false;
+let busy = false;
 
-let swapRunning = false;
+let sourceImageLoaded = false;
+let sourceLandmarks = null;
 
-let processing = false;
+let cameraOn = false;
+let cameraLandmarks = null;
 
-let animationId = null;
-
-let selectedSource = null;
-
-let sourceReady = false;
-
-let currentLandmarks = null;
+let calibrationMode = false;
+let calibrationIndex = 0;
 
 let calibrationSamples = [];
 
-let calibrationIndex = 0;
+let swapOn = false;
 
+let lastFpsTime = performance.now();
 let fpsFrames = 0;
 
-let fpsTime =
-    performance.now();
 
+/* =========================================================
+   KALİBRASYON POZLARI
+========================================================= */
 
-/* =====================================================
-   KALİBRASYON
-===================================================== */
+const CALIBRATION_STEPS = [
 
-const calibrationSteps = [
+  {
+    name: "Nötr",
+    description:
+      "Yüzünü rahat bırak. Ağzın kapalı, kaşların doğal olsun."
+  },
 
-    {
-        name:"Nötr",
-        instruction:
-            "😐 Yüzünü tamamen rahat bırak ve kameraya düz bak."
-    },
+  {
+    name: "Gülümse",
+    description:
+      "Doğal bir şekilde gülümse."
+  },
 
-    {
-        name:"Gülümseme",
-        instruction:
-            "😄 Doğal şekilde gülümse."
-    },
+  {
+    name: "Ağzını Aç",
+    description:
+      "Ağzını belirgin şekilde aç."
+  },
 
-    {
-        name:"Ağız",
-        instruction:
-            "😮 Ağzını doğal şekilde aç."
-    },
+  {
+    name: "Kaşlarını Kaldır",
+    description:
+      "İki kaşını yukarı kaldır."
+  },
 
-    {
-        name:"Kaş",
-        instruction:
-            "😲 Kaşlarını yukarı kaldır."
-    },
-
-    {
-        name:"Göz",
-        instruction:
-            "😉 Bir gözünü kapat."
-    }
+  {
+    name: "Gözlerini Kıs",
+    description:
+      "İki gözünü hafifçe kıs."
+  }
 
 ];
 
 
-/* =====================================================
-   ÜÇGENLER
-===================================================== */
+/* =========================================================
+   YARDIMCI FONKSİYONLAR
+========================================================= */
 
-/*
-   Yüzün farklı bölgelerini taşıyan stabil
-   Face Mesh üçgenleri.
-*/
+function setStatus(text, type = "") {
 
-const TRIANGLES = [
+  statusBox.className = "status";
 
-    [10,338,297],
-    [10,297,332],
-    [10,332,284],
-    [10,284,251],
-    [10,251,389],
-    [10,389,356],
-    [10,356,454],
-    [10,454,323],
-    [10,323,361],
-    [10,361,288],
-    [10,288,397],
-    [10,397,365],
-    [10,365,379],
-    [10,379,152],
-    [10,152,176],
-    [10,176,149],
-    [10,149,150],
-    [10,150,136],
-    [10,136,172],
-    [10,172,58],
-    [10,58,132],
-    [10,132,93],
-    [10,93,234],
-    [10,234,127],
-    [10,127,162],
-    [10,162,21],
-    [10,21,54],
-    [10,54,103],
-    [10,103,67],
-    [10,67,109],
+  if (type === "error") {
+    statusBox.classList.add("error");
+  }
 
-    [33,133,159],
-    [33,159,145],
-    [33,145,153],
-    [33,153,144],
-    [33,144,163],
+  if (type === "ok") {
+    statusBox.classList.add("ok");
+  }
 
-    [263,362,386],
-    [263,386,374],
-    [263,374,380],
-    [263,380,373],
-    [263,373,390],
+  if (type === "warning") {
+    statusBox.classList.add("warningText");
+  }
 
-    [61,185,40],
-    [61,40,146],
-
-    [291,409,270],
-    [291,270,375],
-
-    [78,95,191],
-    [78,191,80],
-
-    [308,324,415],
-    [308,415,310],
-
-    [13,14,78],
-    [13,78,308],
-    [14,17,78],
-    [14,308,17],
-
-    [152,377,400],
-    [152,400,148],
-
-    [1,2,98],
-    [1,98,327],
-    [2,326,98],
-    [2,97,326],
-
-    [168,6,197],
-    [6,195,197],
-    [6,197,5]
-
-];
+  statusBox.textContent = text;
+}
 
 
-/* =====================================================
-   DURUM MESAJI
-===================================================== */
+function cloneLandmarks(landmarks) {
 
-function setStatus(
-    text,
-    type="info"
-){
-
-    status.textContent =
-        text;
-
-    status.className =
-        "status " + type;
+  return landmarks.map(p => ({
+    x: p.x,
+    y: p.y,
+    z: p.z
+  }));
 
 }
 
 
-/* =====================================================
-   ADIM
-===================================================== */
+function distance(a, b) {
 
-function setStep(index){
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
 
-    for(
-        let i=0;
-        i<5;
-        i++
-    ){
+  return Math.sqrt(dx * dx + dy * dy);
 
-        const element =
-            document.getElementById(
-                "step"+i
-            );
-
-        element.classList.remove(
-            "active",
-            "done"
-        );
+}
 
 
-        if(i < index){
+/* =========================================================
+   MEDIAPIPE
+========================================================= */
 
-            element.classList.add(
-                "done"
-            );
+function createFaceMesh() {
 
-        }
+  const mesh = new FaceMesh({
 
+    locateFile: file => {
 
-        if(i === index){
-
-            element.classList.add(
-                "active"
-            );
-
-        }
+      return
+        `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
 
     }
 
+  });
+
+  mesh.setOptions({
+
+    maxNumFaces: 1,
+
+    refineLandmarks: true,
+
+    minDetectionConfidence: 0.5,
+
+    minTrackingConfidence: 0.5
+
+  });
+
+  return mesh;
 }
 
 
-/* =====================================================
-   FACE MESH OLUŞTUR
-===================================================== */
+/* =========================================================
+   BAŞLAT
+========================================================= */
 
-function createMesh(){
+async function init() {
 
-    const mesh =
-        new FaceMesh({
+  try {
 
-            locateFile:
-            function(file){
+    cameraMesh = createFaceMesh();
 
-                return (
-                    "https://cdn.jsdelivr.net/npm/"+
-                    "@mediapipe/face_mesh/"+
-                    file
-                );
+    cameraMesh.onResults(results => {
 
-            }
+      if (
+        results.multiFaceLandmarks &&
+        results.multiFaceLandmarks.length > 0
+      ) {
 
-        });
+        cameraLandmarks =
+          results.multiFaceLandmarks[0];
 
+        faceCountEl.textContent = "1";
 
-    mesh.setOptions({
+        landmarkCountEl.textContent =
+          cameraLandmarks.length;
 
-        maxNumFaces:1,
+        if (calibrationMode) {
 
-        refineLandmarks:true,
+          drawCalibrationPreview(cameraLandmarks);
 
-        minDetectionConfidence:
-            0.5,
+        }
+        else if (swapOn) {
 
-        minTrackingConfidence:
-            0.5
+          renderSwap(cameraLandmarks);
+
+        }
+
+      }
+      else {
+
+        cameraLandmarks = null;
+
+        faceCountEl.textContent = "0";
+        landmarkCountEl.textContent = "0";
+
+      }
 
     });
 
+    setStatus(
+      "Hazır. Önce kaynak yüz fotoğrafını seç.",
+      "ok"
+    );
 
-    return mesh;
+  }
+  catch (error) {
 
-}
+    console.error(error);
 
+    setStatus(
+      "MediaPipe başlatılamadı: " + error.message,
+      "error"
+    );
 
-/* =====================================================
-   AI BAŞLAT
-===================================================== */
-
-async function initialize(){
-
-    try{
-
-        if(
-            typeof FaceMesh ===
-            "undefined"
-        ){
-
-            throw new Error(
-                "MediaPipe Face Mesh yüklenmedi."
-            );
-
-        }
-
-
-        cameraMesh =
-            createMesh();
-
-
-        cameraMesh.onResults(
-            handleCameraResults
-        );
-
-
-        analyzeButton.disabled =
-            false;
-
-
-        setStatus(
-            "✅ AI hazır.\n\n"+
-            "Fotoğrafını seç.",
-            "success"
-        );
-
-    }
-
-    catch(error){
-
-        console.error(error);
-
-        setStatus(
-            "❌ AI başlatılamadı:\n\n"+
-            error.message,
-            "error"
-        );
-
-    }
+  }
 
 }
 
 
-/* =====================================================
-   FOTOĞRAF SEÇ
-===================================================== */
+/* =========================================================
+   FOTOĞRAF SEÇİMİ
+========================================================= */
 
-photoInput.addEventListener(
-"change",
-function(){
+photo.addEventListener("change", () => {
 
-    const file =
-        photoInput.files[0];
+  const file = photo.files[0];
 
+  if (!file) {
 
-    if(!file)
-        return;
+    sourceImageLoaded = false;
+    analyzeBtn.disabled = true;
 
+    photoStatus.textContent =
+      "Fotoğraf seçilmedi.";
 
-    selectedSource =
-        new Image();
+    return;
 
+  }
 
-    selectedSource.onload =
-    function(){
+  const url = URL.createObjectURL(file);
 
-        photoInfo.textContent =
-            "📸 Fotoğraf hazır.\n"+
-            "\"Kaynak Yüzü Analiz Et\" butonuna bas.";
+  sourceImage.onload = () => {
 
+    sourceImageLoaded = true;
 
-        analyzeButton.disabled =
-            false;
+    analyzeBtn.disabled = false;
 
-    };
+    photoStatus.innerHTML =
+      "✅ Fotoğraf yüklendi. Şimdi <b>Kaynak Yüzü Analiz Et</b> butonuna bas.";
 
+  };
 
-    selectedSource.onerror =
-    function(){
+  sourceImage.onerror = () => {
 
-        photoInfo.textContent =
-            "❌ Fotoğraf okunamadı.";
+    sourceImageLoaded = false;
 
-    };
+    analyzeBtn.disabled = true;
 
+    photoStatus.textContent =
+      "❌ Fotoğraf yüklenemedi.";
 
-    selectedSource.src =
-        URL.createObjectURL(file);
+  };
+
+  sourceImage.src = url;
 
 });
 
 
-/* =====================================================
-   KAYNAK FOTOĞRAF ANALİZİ
-===================================================== */
+/* =========================================================
+   STATİK FOTOĞRAF ANALİZİ
+========================================================= */
 
-analyzeButton.addEventListener(
-"click",
-async function(){
+function detectOnce(mesh, image, timeoutMs = 12000) {
 
-    if(!selectedSource){
+  return new Promise(async (resolve, reject) => {
 
-        setStatus(
-            "❌ Önce fotoğraf seç.",
-            "error"
+    let finished = false;
+
+    const timeout = setTimeout(() => {
+
+      if (finished) return;
+
+      finished = true;
+
+      reject(
+        new Error(
+          "Yüz analizi zaman aşımına uğradı."
+        )
+      );
+
+    }, timeoutMs);
+
+
+    mesh.onResults(results => {
+
+      if (finished) return;
+
+      if (
+        results.multiFaceLandmarks &&
+        results.multiFaceLandmarks.length > 0
+      ) {
+
+        finished = true;
+
+        clearTimeout(timeout);
+
+        resolve(
+          results.multiFaceLandmarks[0]
         );
 
-        return;
+      }
+
+    });
+
+
+    try {
+
+      await mesh.send({
+        image: image
+      });
+
+    }
+    catch (error) {
+
+      if (finished) return;
+
+      finished = true;
+
+      clearTimeout(timeout);
+
+      reject(error);
 
     }
 
+  });
 
-    analyzeButton.disabled =
-        true;
+}
 
 
-    setStep(1);
+/* =========================================================
+   KAYNAK YÜZ ANALİZİ
+========================================================= */
+
+analyzeBtn.addEventListener("click", async () => {
+
+  if (!sourceImageLoaded) {
+
+    photoStatus.textContent =
+      "Önce bir fotoğraf seç.";
+
+    return;
+
+  }
+
+  analyzeBtn.disabled = true;
+
+  photoStatus.textContent =
+    "⏳ Kaynak yüz analiz ediliyor...";
+
+  try {
+
+    sourceMesh = createFaceMesh();
+
+    const landmarks = await detectOnce(
+      sourceMesh,
+      sourceImage,
+      15000
+    );
+
+    if (!landmarks) {
+
+      throw new Error(
+        "Fotoğrafta yüz bulunamadı."
+      );
+
+    }
+
+    sourceLandmarks =
+      cloneLandmarks(landmarks);
+
+    photoStatus.innerHTML =
+      `✅ Kaynak yüz analiz edildi.
+       <br>
+       ${sourceLandmarks.length} yüz noktası bulundu.`;
+
+    calibrateBtn.disabled = false;
+
+    setStatus(
+      "Kaynak yüz hazır. Kamerayı açıp mimik kalibrasyonuna geçebilirsin.",
+      "ok"
+    );
+
+  }
+  catch (error) {
+
+    console.error(error);
+
+    photoStatus.innerHTML =
+      `<span class="error">
+        ❌ ${error.message}
+      </span>`;
+
+    analyzeBtn.disabled = false;
+
+  }
+
+});
+
+
+/* =========================================================
+   KAMERA
+========================================================= */
+
+async function openCamera() {
+
+  if (cameraOn) return;
+
+  try {
+
+    if (!navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia) {
+
+      throw new Error(
+        "Bu tarayıcı kamera erişimini desteklemiyor."
+      );
+
+    }
+
+    stream = await navigator.mediaDevices.getUserMedia({
+
+      video: {
+
+        facingMode: "user",
+
+        width: {
+          ideal: 1280
+        },
+
+        height: {
+          ideal: 720
+        }
+
+      },
+
+      audio: false
+
+    });
+
+
+    video.srcObject = stream;
+
+    await video.play();
+
+    cameraOn = true;
+
+    openCameraBtn.disabled = true;
+    stopCameraBtn.disabled = false;
+
+    canvas.width =
+      video.videoWidth || 1280;
+
+    canvas.height =
+      video.videoHeight || 720;
 
 
     setStatus(
-        "🔎 Kaynak yüz analiz ediliyor...\n\n"+
-        "478 yüz noktası çıkarılıyor.",
-        "info"
+      "📷 Kamera açık. Yüzünü kameraya göster.",
+      "ok"
     );
 
 
-    photoInfo.textContent =
-        "⏳ Yüz landmarkları çıkarılıyor...";
+    cancelAnimationFrame(animationFrame);
 
+    animationFrame =
+      requestAnimationFrame(loop);
 
-    try{
+  }
+  catch (error) {
 
-        /*
-          KAYNAK FOTOĞRAF İÇİN
-          AYRI MESHF
-        */
+    console.error(error);
 
-        sourceMesh =
-            createMesh();
+    setStatus(
+      "❌ Kamera açılamadı: " + error.message,
+      "error"
+    );
 
-
-        const result =
-            await analyzeSourceImage(
-                selectedSource
-            );
-
-
-        if(!result){
-
-            throw new Error(
-                "Fotoğrafta yüz bulunamadı."
-            );
-
-        }
-
-
-        sourceReady =
-            true;
-
-
-        /*
-          Kaynak fotoğraf landmarkları.
-        */
-
-        sourceImage.src =
-            selectedSource.src;
-
-
-        sourceImage.width =
-            selectedSource.naturalWidth;
-
-
-        sourceImage.height =
-            selectedSource.naturalHeight;
-
-
-        /*
-          İlk kaynak yüzümüz.
-        */
-
-        calibrationSamples = [
-
-            {
-                name:"Fotoğraf",
-
-                landmarks:
-                    cloneLandmarks(result),
-
-                image:
-                    selectedSource
-            }
-
-        ];
-
-
-        landmarksEl.textContent =
-            result.length;
-
-
-        photoInfo.textContent =
-            "✅ Kaynak yüz analiz edildi.";
-
-
-        calibrationButton.disabled =
-            false;
-
-
-        setStatus(
-            "🟢 Kaynak yüz başarıyla analiz edildi.\n\n"+
-            "Şimdi mimik kalibrasyonunu başlat.",
-            "success"
-        );
-
-
-        setStep(2);
-
-    }
-
-    catch(error){
-
-        console.error(error);
-
-        analyzeButton.disabled =
-            false;
-
-
-        setStatus(
-            "❌ Kaynak yüz analizi başarısız:\n\n"+
-            error.message,
-            "error"
-        );
-
-
-        photoInfo.textContent =
-            "❌ Analiz başarısız.";
-
-    }
-
-});
-
-
-/* =====================================================
-   KAYNAK FOTOĞRAF ANALİZ MOTORU
-===================================================== */
-
-function analyzeSourceImage(
-    image
-){
-
-    return new Promise(
-    async function(
-        resolve,
-        reject
-    ){
-
-        let finished =
-            false;
-
-
-        const timeout =
-            setTimeout(
-            function(){
-
-                if(finished)
-                    return;
-
-
-                finished =
-                    true;
-
-
-                reject(
-                    new Error(
-                        "Fotoğraf analizi zaman aşımına uğradı."
-                    )
-                );
-
-            },
-            15000
-            );
-
-
-        sourceMesh.onResults(
-        function(result){
-
-            if(finished)
-                return;
-
-
-            finished =
-                true;
-
-
-            clearTimeout(
-                timeout
-            );
-
-
-            const points =
-                result.multiFaceLandmarks &&
-                result.multiFaceLandmarks.length
-                    ? result.multiFaceLandmarks[0]
-                    : null;
-
-
-            resolve(points);
-
-        });
-
-
-        try{
-
-            await sourceMesh.send({
-
-                image:image
-
-            });
-
-        }
-
-        catch(error){
-
-            if(!finished){
-
-                finished =
-                    true;
-
-                clearTimeout(
-                    timeout
-                );
-
-                reject(error);
-
-            }
-
-        }
-
-    });
+  }
 
 }
 
 
-/* =====================================================
-   KAMERA AÇ
-===================================================== */
+/* =========================================================
+   KAMERA DÖNGÜSÜ
+========================================================= */
 
-cameraButton.addEventListener(
-"click",
-openCamera
+async function loop() {
+
+  if (!cameraOn) return;
+
+  if (video.readyState >= 2) {
+
+    if (!calibrationMode && !swapOn) {
+
+      ctx.save();
+
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+
+      ctx.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      ctx.restore();
+
+    }
+
+    if (!busy) {
+
+      busy = true;
+
+      try {
+
+        await cameraMesh.send({
+          image: video
+        });
+
+      }
+      catch (error) {
+
+        console.error(
+          "Camera MediaPipe error:",
+          error
+        );
+
+      }
+
+      busy = false;
+
+    }
+
+  }
+
+  updateFPS();
+
+  animationFrame =
+    requestAnimationFrame(loop);
+
+}
+
+
+/* =========================================================
+   FPS
+========================================================= */
+
+function updateFPS() {
+
+  fpsFrames++;
+
+  const now = performance.now();
+
+  if (now - lastFpsTime >= 1000) {
+
+    fpsEl.textContent =
+      fpsFrames;
+
+    fpsFrames = 0;
+
+    lastFpsTime = now;
+
+  }
+
+}
+
+
+/* =========================================================
+   KAMERAYI DURDUR
+========================================================= */
+
+function stopCamera() {
+
+  cameraOn = false;
+
+  cancelAnimationFrame(animationFrame);
+
+  if (stream) {
+
+    stream.getTracks().forEach(track => {
+      track.stop();
+    });
+
+    stream = null;
+
+  }
+
+  video.srcObject = null;
+
+  openCameraBtn.disabled = false;
+  stopCameraBtn.disabled = true;
+
+  cameraLandmarks = null;
+
+  faceCountEl.textContent = "0";
+  landmarkCountEl.textContent = "0";
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  setStatus(
+    "Kamera durduruldu."
+  );
+
+}
+
+
+/* =========================================================
+   KAMERA BUTONLARI
+========================================================= */
+
+openCameraBtn.addEventListener(
+  "click",
+  openCamera
+);
+
+stopCameraBtn.addEventListener(
+  "click",
+  stopCamera
 );
 
 
-async function openCamera(){
+/* =========================================================
+   KALİBRASYON
+========================================================= */
 
-    try{
+calibrateBtn.addEventListener("click", async () => {
 
-        if(mediaStream){
+  if (!sourceLandmarks) {
 
-            return;
-
-        }
-
-
-        if(
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices
-                .getUserMedia
-        ){
-
-            throw new Error(
-                "Tarayıcı kamera erişimini desteklemiyor."
-            );
-
-        }
-
-
-        setStatus(
-            "📷 Kamera açılıyor...",
-            "info"
-        );
-
-
-        mediaStream =
-            await navigator
-            .mediaDevices
-            .getUserMedia({
-
-                video:{
-
-                    facingMode:"user",
-
-                    width:{
-                        ideal:1280
-                    },
-
-                    height:{
-                        ideal:720
-                    }
-
-                },
-
-                audio:false
-
-            });
-
-
-        cameraVideo.srcObject =
-            mediaStream;
-
-
-        await cameraVideo.play();
-
-
-        await waitForVideo();
-
-
-        canvas.width =
-            cameraVideo.videoWidth ||
-            1280;
-
-
-        canvas.height =
-            cameraVideo.videoHeight ||
-            720;
-
-
-        cameraRunning =
-            true;
-
-
-        cameraButton.disabled =
-            true;
-
-
-        stopButton.disabled =
-            false;
-
-
-        cameraInfo.textContent =
-            "🟢 Kamera aktif.";
-
-
-        setStatus(
-            "🟢 Kamera açıldı.\n\n"+
-            "Yüzün kamerada görünmeli.",
-            "success"
-        );
-
-
-        startLoop();
-
-    }
-
-    catch(error){
-
-        console.error(error);
-
-
-        mediaStream =
-            null;
-
-
-        setStatus(
-            "❌ Kamera açılamadı:\n\n"+
-            error.name+
-            "\n"+
-            error.message,
-            "error"
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   VIDEO HAZIR
-===================================================== */
-
-function waitForVideo(){
-
-    return new Promise(
-    function(resolve){
-
-        if(
-            cameraVideo.videoWidth
-        ){
-
-            resolve();
-
-            return;
-
-        }
-
-
-        let tries=0;
-
-
-        const timer =
-            setInterval(
-            function(){
-
-                tries++;
-
-
-                if(
-                    cameraVideo.videoWidth ||
-                    tries > 40
-                ){
-
-                    clearInterval(
-                        timer
-                    );
-
-                    resolve();
-
-                }
-
-            },
-            50
-            );
-
-    });
-
-}
-
-
-/* =====================================================
-   KAMERA DÖNGÜSÜ
-===================================================== */
-
-function startLoop(){
-
-    if(!cameraRunning)
-        return;
-
-
-    drawCamera();
-
-
-    if(
-        !processing &&
-        cameraVideo.readyState >= 2
-    ){
-
-        processing =
-            true;
-
-
-        cameraMesh
-        .send({
-
-            image:
-                cameraVideo
-
-        })
-        .catch(
-        function(error){
-
-            console.error(
-                error
-            );
-
-            setStatus(
-                "❌ Kamera AI hatası:\n\n"+
-                error.message,
-                "error"
-            );
-
-        })
-        .finally(
-        function(){
-
-            processing =
-                false;
-
-        });
-
-    }
-
-
-    animationId =
-        requestAnimationFrame(
-            startLoop
-        );
-
-}
-
-
-/* =====================================================
-   KAMERA GÖRÜNTÜSÜ
-===================================================== */
-
-function drawCamera(){
-
-    if(
-        !cameraVideo.videoWidth
-    )
-        return;
-
-
-    ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
+    setStatus(
+      "Önce kaynak yüzünü analiz et.",
+      "warning"
     );
 
+    return;
 
-    ctx.save();
+  }
 
+  if (!cameraOn) {
 
-    /*
-      Ön kamerayı ayna görüntüsü
-      olarak gösteriyoruz.
-    */
+    await openCamera();
 
-    ctx.translate(
-        canvas.width,
-        0
-    );
+  }
 
+  calibrationMode = true;
 
-    ctx.scale(
-        -1,
-        1
-    );
+  swapOn = false;
 
+  calibrationIndex = 0;
 
-    ctx.drawImage(
+  calibrationSamples = [];
 
-        cameraVideo,
+  calibrationBox.classList.add("active");
 
-        0,
-        0,
+  calibrateBtn.style.display = "none";
 
-        canvas.width,
-        canvas.height
+  showCalibrationStep();
 
-    );
+});
 
 
-    ctx.restore();
+/* =========================================================
+   KALİBRASYON ADIMINI GÖSTER
+========================================================= */
 
-}
+function showCalibrationStep() {
 
+  const step =
+    CALIBRATION_STEPS[calibrationIndex];
 
-/* =====================================================
-   KAMERA SONUÇLARI
-===================================================== */
+  if (!step) return;
 
-function handleCameraResults(
-    results
-){
+  calTitle.textContent =
+    `${calibrationIndex + 1}/${CALIBRATION_STEPS.length} — ${step.name}`;
 
-    const points =
-        results.multiFaceLandmarks &&
-        results.multiFaceLandmarks.length
-            ? results.multiFaceLandmarks[0]
-            : null;
+  calDescription.textContent =
+    step.description;
 
-
-    currentLandmarks =
-        points;
-
-
-    if(!points){
-
-        faceCount.textContent =
-            "0";
-
-        return;
-
-    }
-
-
-    faceCount.textContent =
-        "1";
-
-
-    landmarksEl.textContent =
-        points.length;
-
-
-    updateFPS();
-
-
-    /*
-      KALİBRASYON
-    */
-
-    if(
-        calibrationIndex >= 0 &&
-        calibrationIndex <
-            calibrationSteps.length
-    ){
-
-        /*
-          Kalibrasyon sırasında
-          yüz landmarkları ekranda.
-        */
-
-        drawLandmarks(
-            points
-        );
-
-    }
-
-
-    /*
-      CANLI SWAP
-    */
-
-    if(
-        swapRunning &&
-        sourceReady &&
-        calibrationSamples.length
-    ){
-
-        performFaceSwap(
-            points
-        );
-
-    }
+  savePoseBtn.textContent =
+    `✓ ${step.name} Pozunu Kaydet`;
 
 }
 
 
-/* =====================================================
-   LANDMARK GÖSTER
-===================================================== */
+/* =========================================================
+   KALİBRASYON POZU KAYDET
+========================================================= */
 
-function drawLandmarks(
-    points
-){
+savePoseBtn.addEventListener("click", () => {
 
-    ctx.save();
+  if (!cameraLandmarks) {
 
+    setStatus(
+      "Kamerada yüz bulunamadı. Yüzünü kameraya göster.",
+      "warning"
+    );
 
-    ctx.fillStyle =
-        "#42ddff";
+    return;
 
+  }
 
-    for(
-        let i=0;
-        i<points.length;
-        i+=5
-    ){
+  const snap =
+    document.createElement("canvas");
 
-        const p =
-            points[i];
+  snap.width =
+    video.videoWidth || 1280;
 
+  snap.height =
+    video.videoHeight || 720;
 
-        const x =
-            (1-p.x) *
-            canvas.width;
+  const snapCtx =
+    snap.getContext("2d");
 
-
-        const y =
-            p.y *
-            canvas.height;
-
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-            x,
-            y,
-            1.5,
-            0,
-            Math.PI*2
-        );
+  snapCtx.drawImage(
+    video,
+    0,
+    0,
+    snap.width,
+    snap.height
+  );
 
 
-        ctx.fill();
+  calibrationSamples.push({
 
-    }
+    name:
+      CALIBRATION_STEPS[calibrationIndex].name,
 
+    landmarks:
+      cloneLandmarks(cameraLandmarks),
 
-    ctx.restore();
+    image:
+      snap,
 
-}
+    metrics:
+      calculateExpressionMetrics(
+        cameraLandmarks
+      )
 
-
-/* =====================================================
-   KALİBRASYON BAŞLAT
-===================================================== */
-
-calibrationButton.addEventListener(
-"click",
-async function(){
-
-    if(!sourceReady){
-
-        setStatus(
-            "❌ Önce kaynak yüzü analiz et.",
-            "error"
-        );
-
-        return;
-
-    }
+  });
 
 
-    if(!cameraRunning){
-
-        await openCamera();
-
-    }
+  calibrationIndex++;
 
 
-    calibrationIndex =
-        0;
+  if (
+    calibrationIndex >=
+    CALIBRATION_STEPS.length
+  ) {
 
+    finishCalibration();
 
-    calibrationSamples = [
-
-        calibrationSamples[0]
-
-    ];
-
-
-    calibrationButton.disabled =
-        true;
-
-
-    setStep(2);
-
+  }
+  else {
 
     showCalibrationStep();
 
-});
-
-
-/* =====================================================
-   KALİBRASYON EKRANI
-===================================================== */
-
-function showCalibrationStep(){
-
-    if(
-        calibrationIndex >=
-        calibrationSteps.length
-    ){
-
-        finishCalibration();
-
-        return;
-
-    }
-
-
-    const step =
-        calibrationSteps[
-            calibrationIndex
-        ];
-
-
-    calibrationInfo.textContent =
-        "🎯 "+
-        step.name+
-        "\n\n"+
-        step.instruction+
-        "\n\n"+
-        "Hazır olduğunda aşağıdaki düğmeye bas.";
-
-
-    setStatus(
-        "🧭 KALİBRASYON "+
-        (calibrationIndex+1)+
-        "/"+
-        calibrationSteps.length+
-        "\n\n"+
-        step.instruction,
-        "info"
-    );
-
-
-    /*
-      Düğmeyi gösteriyoruz.
-      Aynı buton artık poz kaydedecek.
-    */
-
-    calibrationButton.disabled =
-        false;
-
-    calibrationButton.textContent =
-        "✓ Bu Pozu Kaydet";
-
-}
-
-
-/* =====================================================
-   KALİBRASYON POZU KAYDET
-===================================================== */
-
-calibrationButton.addEventListener(
-"click",
-function(){
-
-    /*
-      İlk tıklama başlatma,
-      sonraki tıklamalar kayıt.
-    */
-
-    if(
-        calibrationIndex < 0
-    )
-        return;
-
-
-    if(
-        !currentLandmarks
-    ){
-
-        setStatus(
-            "❌ Yüz bulunamadı.\n\n"+
-            "Kameraya yaklaş ve yüzünü göster.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    /*
-      Kameradan o anki görüntünün
-      gerçek bir snapshot'ını al.
-    */
-
-    const snapshot =
-        document.createElement(
-            "canvas"
-        );
-
-
-    snapshot.width =
-        cameraVideo.videoWidth ||
-        1280;
-
-
-    snapshot.height =
-        cameraVideo.videoHeight ||
-        720;
-
-
-    const snapshotCtx =
-        snapshot.getContext(
-            "2d"
-        );
-
-
-    snapshotCtx.drawImage(
-
-        cameraVideo,
-
-        0,
-        0,
-
-        snapshot.width,
-        snapshot.height
-
-    );
-
-
-    calibrationSamples.push({
-
-        name:
-            calibrationSteps[
-                calibrationIndex
-            ].name,
-
-        landmarks:
-            cloneLandmarks(
-                currentLandmarks
-            ),
-
-        image:
-            snapshot
-
-    });
-
-
-    calibrationIndex++;
-
-
-    if(
-        calibrationIndex >=
-        calibrationSteps.length
-    ){
-
-        finishCalibration();
-
-    }
-
-    else{
-
-        showCalibrationStep();
-
-    }
+  }
 
 });
 
 
-/* =====================================================
+/* =========================================================
    KALİBRASYON BİTİR
-===================================================== */
+========================================================= */
 
-function finishCalibration(){
+function finishCalibration() {
 
-    calibrationIndex =
-        -1;
+  calibrationMode = false;
 
+  calibrationBox.classList.remove("active");
 
-    /*
-      Kamerayı kapatmıyoruz.
-      Kullanıcı doğrudan hedef kişiyi
-      gösterebilir.
-    */
+  calibrateBtn.style.display = "block";
 
-    swapButton.disabled =
-        false;
+  calibrateBtn.disabled = true;
 
+  swapBtn.disabled = false;
 
-    setStep(4);
-
-
-    calibrationInfo.textContent =
-        "✅ 5 farklı mimik kaydedildi.";
-
-
-    swapInfo.textContent =
-        "Hazır. Hedef kişiyi kameraya getir.";
-
-
-    calibrationButton.disabled =
-        true;
-
-
-    calibrationButton.textContent =
-        "✅ Kalibrasyon Tamamlandı";
-
-
-    setStatus(
-        "✅ Mimik kalibrasyonu tamamlandı.\n\n"+
-        "Şimdi hedef kişiyi kameraya getir ve Face Swap Başlat'a bas.",
-        "success"
-    );
+  setStatus(
+    "✅ Mimik kalibrasyonu tamamlandı. Artık Face Swap'ı başlatabilirsin.",
+    "ok"
+  );
 
 }
 
 
-/* =====================================================
-   FACE SWAP BAŞLAT
-===================================================== */
+/* =========================================================
+   KALİBRASYON PREVIEW
+========================================================= */
 
-swapButton.addEventListener(
-"click",
-function(){
+function drawCalibrationPreview(landmarks) {
 
-    if(
-        !sourceReady ||
-        calibrationSamples.length < 2
-    ){
+  ctx.save();
 
-        setStatus(
-            "❌ Önce kalibrasyonu tamamla.",
-            "error"
-        );
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
 
-        return;
+  ctx.drawImage(
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
 
-    }
-
-
-    if(!cameraRunning){
-
-        setStatus(
-            "❌ Kamera açık değil.",
-            "error"
-        );
-
-        return;
-
-    }
+  ctx.restore();
 
 
-    swapRunning =
-        true;
+  ctx.fillStyle = "rgba(0,0,0,.45)";
+
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    60
+  );
 
 
-    swapButton.textContent =
-        "🟢 Face Swap Aktif";
+  ctx.fillStyle = "#7ee7ff";
+
+  ctx.font =
+    "bold 22px Arial";
+
+  ctx.fillText(
+    `${CALIBRATION_STEPS[calibrationIndex]?.name || ""}`,
+    20,
+    38
+  );
 
 
-    swapInfo.textContent =
-        "Hedef kişinin yüzü ve mimikleri takip ediliyor.";
-
-
-    setStatus(
-        "🔥 CANLI FACE SWAP AKTİF\n\n"+
-        "Yüz hareketleri takip ediliyor.",
-        "success"
-    );
-
-});
-
-
-/* =====================================================
-   MİMİK METRİKLERİ
-===================================================== */
-
-function getExpressionMetrics(
-    lm
-){
-
-    const mouthWidth =
-        distance(
-            lm[61],
-            lm[291]
-        );
-
-
-    const mouthOpen =
-        distance(
-            lm[13],
-            lm[14]
-        ) /
-        Math.max(
-            mouthWidth,
-            0.001
-        );
-
-
-    const leftEye =
-        distance(
-            lm[159],
-            lm[145]
-        ) /
-        Math.max(
-            distance(
-                lm[33],
-                lm[133]
-            ),
-            0.001
-        );
-
-
-    const rightEye =
-        distance(
-            lm[386],
-            lm[374]
-        ) /
-        Math.max(
-            distance(
-                lm[263],
-                lm[362]
-            ),
-            0.001
-        );
-
-
-    const eyeOpen =
-        (
-            leftEye +
-            rightEye
-        ) / 2;
-
-
-    const smile =
-        distance(
-            lm[61],
-            lm[291]
-        );
-
-
-    const brow =
-        (
-            (lm[70].y-lm[159].y) +
-            (lm[300].y-lm[386].y)
-        ) / 2;
-
-
-    return {
-
-        mouthOpen,
-
-        eyeOpen,
-
-        smile,
-
-        brow
-
-    };
+  drawLandmarks(
+    landmarks,
+    "#7ee7ff"
+  );
 
 }
 
 
-/* =====================================================
-   EN YAKIN MİMİK
-===================================================== */
+/* =========================================================
+   LANDMARK ÇİZ
+========================================================= */
 
-function chooseExpression(
-    target
-){
+function drawLandmarks(
+  landmarks,
+  color = "#00ffff"
+) {
 
-    const targetMetrics =
-        getExpressionMetrics(
-            target
-        );
+  if (!landmarks) return;
 
+  ctx.fillStyle = color;
 
-    let best =
-        calibrationSamples[0];
+  for (let i = 0; i < landmarks.length; i += 4) {
 
+    const p = landmarks[i];
 
-    let bestScore =
-        Infinity;
+    const x =
+      (1 - p.x) * canvas.width;
 
-
-    for(
-        const sample
-        of calibrationSamples
-    ){
-
-        if(
-            !sample.metrics
-        ){
-
-            sample.metrics =
-                getExpressionMetrics(
-                    sample.landmarks
-                );
-
-        }
-
-
-        const score =
-
-            Math.abs(
-                targetMetrics.mouthOpen -
-                sample.metrics.mouthOpen
-            ) * 2
-
-            +
-
-            Math.abs(
-                targetMetrics.eyeOpen -
-                sample.metrics.eyeOpen
-            )
-
-            +
-
-            Math.abs(
-                targetMetrics.smile -
-                sample.metrics.smile
-            )
-
-            +
-
-            Math.abs(
-                targetMetrics.brow -
-                sample.metrics.brow
-            );
-
-
-        if(
-            score < bestScore
-        ){
-
-            bestScore =
-                score;
-
-            best =
-                sample;
-
-        }
-
-    }
-
-
-    return best;
-
-}
-
-
-/* =====================================================
-   FACE SWAP
-===================================================== */
-
-function performFaceSwap(
-    target
-){
-
-    const sample =
-        chooseExpression(
-            target
-        );
-
-
-    if(
-        !sample ||
-        !sample.image
-    )
-        return;
-
-
-    const metrics =
-        getExpressionMetrics(
-            target
-        );
-
-
-    expressionEl.textContent =
-        detectExpression(
-            metrics
-        );
-
-
-    /*
-      Önce kamera görüntüsü zaten
-      canvas'ta bulunuyor.
-
-      Şimdi seçilen kaynak yüzün
-      üçgenlerini hedef yüze
-      taşıyoruz.
-    */
-
-    warpFace(
-        sample,
-        target
-    );
-
-}
-
-
-/* =====================================================
-   YÜZÜ MESH İLE WARP ET
-===================================================== */
-
-function warpFace(
-    sample,
-    target
-){
-
-    const image =
-        sample.image;
-
-
-    const sourceWidth =
-        image.width ||
-        image.naturalWidth;
-
-
-    const sourceHeight =
-        image.height ||
-        image.naturalHeight;
-
-
-    const targetWidth =
-        canvas.width;
-
-
-    const targetHeight =
-        canvas.height;
-
-
-    for(
-        const triangle
-        of TRIANGLES
-    ){
-
-        const ia =
-            triangle[0];
-
-        const ib =
-            triangle[1];
-
-        const ic =
-            triangle[2];
-
-
-        const sa =
-            sample.landmarks[
-                ia
-            ];
-
-        const sb =
-            sample.landmarks[
-                ib
-            ];
-
-        const sc =
-            sample.landmarks[
-                ic
-            ];
-
-
-        const ta =
-            target[
-                ia
-            ];
-
-        const tb =
-            target[
-                ib
-            ];
-
-        const tc =
-            target[
-                ic
-            ];
-
-
-        if(
-            !sa ||
-            !sb ||
-            !sc ||
-            !ta ||
-            !tb ||
-            !tc
-        )
-            continue;
-
-
-        /*
-          Kaynak görüntü normal,
-          hedef kamera görüntüsü aynalanmış.
-        */
-
-        const sx1 =
-            sa.x *
-            sourceWidth;
-
-
-        const sy1 =
-            sa.y *
-            sourceHeight;
-
-
-        const sx2 =
-            sb.x *
-            sourceWidth;
-
-
-        const sy2 =
-            sb.y *
-            sourceHeight;
-
-
-        const sx3 =
-            sc.x *
-            sourceWidth;
-
-
-        const sy3 =
-            sc.y *
-            sourceHeight;
-
-
-        const tx1 =
-            (1-ta.x) *
-            targetWidth;
-
-
-        const ty1 =
-            ta.y *
-            targetHeight;
-
-
-        const tx2 =
-            (1-tb.x) *
-            targetWidth;
-
-
-        const ty2 =
-            tb.y *
-            targetHeight;
-
-
-        const tx3 =
-            (1-tc.x) *
-            targetWidth;
-
-
-        const ty3 =
-            tc.y *
-            targetHeight;
-
-
-        drawTriangle(
-
-            image,
-
-            sx1,
-            sy1,
-
-            sx2,
-            sy2,
-
-            sx3,
-            sy3,
-
-            tx1,
-            ty1,
-
-            tx2,
-            ty2,
-
-            tx3,
-            ty3
-
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   ÜÇGEN WARP
-===================================================== */
-
-function drawTriangle(
-
-    image,
-
-    sx1,
-    sy1,
-
-    sx2,
-    sy2,
-
-    sx3,
-    sy3,
-
-    dx1,
-    dy1,
-
-    dx2,
-    dy2,
-
-    dx3,
-    dy3
-
-){
-
-    const denominator =
-
-        sx1 *
-        (sy2-sy3)
-
-        +
-
-        sx2 *
-        (sy3-sy1)
-
-        +
-
-        sx3 *
-        (sy1-sy2);
-
-
-    if(
-        Math.abs(
-            denominator
-        ) < 0.0001
-    )
-        return;
-
-
-    const a =
-
-        (
-            dx1*(sy2-sy3)
-            +
-            dx2*(sy3-sy1)
-            +
-            dx3*(sy1-sy2)
-        )
-        /
-        denominator;
-
-
-    const b =
-
-        (
-            dy1*(sy2-sy3)
-            +
-            dy2*(sy3-sy1)
-            +
-            dy3*(sy1-sy2)
-        )
-        /
-        denominator;
-
-
-    const c =
-
-        (
-            dx1*(sx3-sx2)
-            +
-            dx2*(sx1-sx3)
-            +
-            dx3*(sx2-sx1)
-        )
-        /
-        denominator;
-
-
-    const d =
-
-        (
-            dy1*(sx3-sx2)
-            +
-            dy2*(sx1-sx3)
-            +
-            dy3*(sx2-sx1)
-        )
-        /
-        denominator;
-
-
-    const e =
-
-        (
-            dx1*(sx2*sy3-sx3*sy2)
-            +
-            dx2*(sx3*sy1-sx1*sy3)
-            +
-            dx3*(sx1*sy2-sx2*sy1)
-        )
-        /
-        denominator;
-
-
-    const f =
-
-        (
-            dy1*(sx2*sy3-sx3*sy2)
-            +
-            dy2*(sx3*sy1-sx1*sy3)
-            +
-            dy3*(sx1*sy2-sx2*sy1)
-        )
-        /
-        denominator;
-
-
-    ctx.save();
-
+    const y =
+      p.y * canvas.height;
 
     ctx.beginPath();
 
-
-    ctx.moveTo(
-        dx1,
-        dy1
+    ctx.arc(
+      x,
+      y,
+      1.7,
+      0,
+      Math.PI * 2
     );
 
+    ctx.fill();
 
-    ctx.lineTo(
-        dx2,
-        dy2
-    );
-
-
-    ctx.lineTo(
-        dx3,
-        dy3
-    );
-
-
-    ctx.closePath();
-
-
-    ctx.clip();
-
-
-    ctx.globalAlpha =
-        0.94;
-
-
-    ctx.setTransform(
-
-        a,
-        b,
-        c,
-        d,
-        e,
-        f
-
-    );
-
-
-    ctx.drawImage(
-        image,
-        0,
-        0
-    );
-
-
-    ctx.restore();
+  }
 
 }
 
 
-/* =====================================================
-   MESAFE
-===================================================== */
+/* =========================================================
+   MİMİK METRİKLERİ
+========================================================= */
 
-function distance(
-    a,
-    b
-){
+function calculateExpressionMetrics(lm) {
 
-    return Math.sqrt(
+  if (!lm || lm.length < 468) {
 
-        Math.pow(
-            a.x-b.x,
-            2
-        )
+    return {
+      mouth: 0,
+      smile: 0,
+      eyeL: 0,
+      eyeR: 0,
+      brow: 0
+    };
 
-        +
+  }
 
-        Math.pow(
-            a.y-b.y,
-            2
-        )
 
+  /*
+    MediaPipe Face Mesh landmark noktaları
+  */
+
+  const leftEyeTop =
+    lm[159];
+
+  const leftEyeBottom =
+    lm[145];
+
+  const rightEyeTop =
+    lm[386];
+
+  const rightEyeBottom =
+    lm[374];
+
+
+  const leftEyeLeft =
+    lm[33];
+
+  const leftEyeRight =
+    lm[133];
+
+  const rightEyeLeft =
+    lm[362];
+
+  const rightEyeRight =
+    lm[263];
+
+
+  const mouthTop =
+    lm[13];
+
+  const mouthBottom =
+    lm[14];
+
+  const mouthLeft =
+    lm[61];
+
+  const mouthRight =
+    lm[291];
+
+
+  const upperLip =
+    lm[0];
+
+  const nose =
+    lm[1];
+
+
+  const leftBrow =
+    lm[105];
+
+  const rightBrow =
+    lm[334];
+
+
+  const leftEyeWidth =
+    distance(
+      leftEyeLeft,
+      leftEyeRight
     );
 
-}
-
-
-/* =====================================================
-   LANDMARK KOPYALA
-===================================================== */
-
-function cloneLandmarks(
-    landmarks
-){
-
-    return landmarks.map(
-        function(p){
-
-            return {
-
-                x:p.x,
-
-                y:p.y,
-
-                z:p.z
-
-            };
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   MİMİK TESPİTİ
-===================================================== */
-
-function detectExpression(
-    m
-){
-
-    if(
-        m.mouthOpen >
-        0.55
-    ){
-
-        return "😮 Ağız";
-
-    }
-
-
-    if(
-        m.eyeOpen <
-        0.38
-    ){
-
-        return "😉 Göz";
-
-    }
-
-
-    if(
-        m.brow >
-        0.02
-    ){
-
-        return "😲 Kaş";
-
-    }
-
-
-    if(
-        m.smile >
-        0.34
-    ){
-
-        return "😄 Gülümseme";
-
-    }
-
-
-    return "😐 Nötr";
-
-}
-
-
-/* =====================================================
-   FPS
-===================================================== */
-
-function updateFPS(){
-
-    fpsFrames++;
-
-
-    const now =
-        performance.now();
-
-
-    if(
-        now-fpsTime >=
-        1000
-    ){
-
-        fps.textContent =
-            Math.round(
-
-                fpsFrames *
-                1000 /
-                (now-fpsTime)
-
-            );
-
-
-        fpsFrames =
-            0;
-
-
-        fpsTime =
-            now;
-
-    }
-
-}
-
-
-/* =====================================================
-   KAMERAYI KAPAT
-===================================================== */
-
-stopButton.addEventListener(
-"click",
-function(){
-
-    cameraRunning =
-        false;
-
-
-    swapRunning =
-        false;
-
-
-    processing =
-        false;
-
-
-    if(animationId){
-
-        cancelAnimationFrame(
-            animationId
-        );
-
-    }
-
-
-    animationId =
-        null;
-
-
-    if(mediaStream){
-
-        mediaStream
-        .getTracks()
-        .forEach(
-            function(track){
-
-                track.stop();
-
-            }
-        );
-
-    }
-
-
-    mediaStream =
-        null;
-
-
-    cameraVideo.srcObject =
-        null;
-
-
-    ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
+  const rightEyeWidth =
+    distance(
+      rightEyeLeft,
+      rightEyeRight
     );
 
 
-    cameraButton.disabled =
-        false;
+  const leftEyeHeight =
+    distance(
+      leftEyeTop,
+      leftEyeBottom
+    );
+
+  const rightEyeHeight =
+    distance(
+      rightEyeTop,
+      rightEyeBottom
+    );
 
 
-    stopButton.disabled =
-        true;
+  const mouthWidth =
+    distance(
+      mouthLeft,
+      mouthRight
+    );
+
+  const mouthHeight =
+    distance(
+      mouthTop,
+      mouthBottom
+    );
 
 
-    faceCount.textContent =
-        "0";
+  const faceHeight =
+    distance(
+      lm[10],
+      lm[152]
+    );
 
 
-    fps.textContent =
-        "0";
+  const mouth =
+    mouthHeight /
+    Math.max(faceHeight, 0.0001);
 
+
+  const smile =
+    mouthWidth /
+    Math.max(faceHeight, 0.0001);
+
+
+  const eyeL =
+    leftEyeHeight /
+    Math.max(leftEyeWidth, 0.0001);
+
+
+  const eyeR =
+    rightEyeHeight /
+    Math.max(rightEyeWidth, 0.0001);
+
+
+  const brow =
+    (
+      distance(
+        leftBrow,
+        nose
+      ) +
+
+      distance(
+        rightBrow,
+        nose
+      )
+    ) / 2;
+
+
+  return {
+
+    mouth,
+    smile,
+    eyeL,
+    eyeR,
+    brow
+
+  };
+
+}
+
+
+/* =========================================================
+   EN YAKIN MİMİK
+========================================================= */
+
+function findClosestCalibration(
+  targetMetrics
+) {
+
+  if (!calibrationSamples.length) {
+    return null;
+  }
+
+
+  let best = null;
+
+  let bestScore =
+    Infinity;
+
+
+  for (
+    const sample
+    of calibrationSamples
+  ) {
+
+    const m =
+      sample.metrics;
+
+
+    const score =
+
+      Math.abs(
+        targetMetrics.mouth -
+        m.mouth
+      ) * 5
+
+      +
+
+      Math.abs(
+        targetMetrics.smile -
+        m.smile
+      ) * 2
+
+      +
+
+      Math.abs(
+        targetMetrics.eyeL -
+        m.eyeL
+      ) * 2
+
+      +
+
+      Math.abs(
+        targetMetrics.eyeR -
+        m.eyeR
+      ) * 2
+
+      +
+
+      Math.abs(
+        targetMetrics.brow -
+        m.brow
+      );
+
+
+    if (score < bestScore) {
+
+      bestScore = score;
+
+      best = sample;
+
+    }
+
+  }
+
+
+  return best;
+
+}
+
+
+/* =========================================================
+   FACE SWAP BUTONU
+========================================================= */
+
+swapBtn.addEventListener("click", () => {
+
+  if (!sourceLandmarks) {
 
     setStatus(
-        "⏹ Kamera kapatıldı.",
-        "info"
+      "Kaynak yüz analiz edilmemiş.",
+      "warning"
     );
+
+    return;
+
+  }
+
+  if (!cameraOn) {
+
+    openCamera();
+
+  }
+
+
+  swapOn = !swapOn;
+
+
+  if (swapOn) {
+
+    swapBtn.textContent =
+      "⛔ Face Swap'ı Durdur";
+
+    setStatus(
+      "🪄 Canlı Face Swap aktif.",
+      "ok"
+    );
+
+  }
+  else {
+
+    swapBtn.textContent =
+      "🪄 Face Swap'ı Başlat";
+
+    setStatus(
+      "Face Swap durduruldu."
+    );
+
+  }
 
 });
 
 
-/* =====================================================
-   SAYFA AÇILIŞI
-===================================================== */
+/* =========================================================
+   FACE SWAP
+========================================================= */
 
-initialize();
+function renderSwap(targetLandmarks) {
+
+  if (
+    !sourceImage ||
+    !sourceLandmarks ||
+    !targetLandmarks
+  ) {
+    return;
+  }
+
+
+  /*
+    Önce kamerayı çiz.
+  */
+
+  ctx.save();
+
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+
+  ctx.drawImage(
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  ctx.restore();
+
+
+  /*
+    Hedef mimik analizi.
+  */
+
+  const targetMetrics =
+    calculateExpressionMetrics(
+      targetLandmarks
+    );
+
+
+  const closest =
+    findClosestCalibration(
+      targetMetrics
+    );
+
+
+  /*
+    Kaynak yüzünü hedef yüze
+    landmark tabanlı olarak oturt.
+  */
+
+  warpSourceFace(
+    sourceImage,
+    sourceLandmarks,
+    targetLandmarks
+  );
+
+
+  if (closest) {
+
+    ctx.fillStyle =
+      "rgba(0,0,0,.5)";
+
+    ctx.fillRect(
+      10,
+      10,
+      230,
+      42
+    );
+
+    ctx.fillStyle =
+      "#ffffff";
+
+    ctx.font =
+      "bold 16px Arial";
+
+    ctx.fillText(
+      "Mimik: " + closest.name,
+      20,
+      37
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   SOURCE FACE WARP
+========================================================= */
+
+/*
+  Burada yüzün tamamını tek bir oval olarak
+  yapıştırmak yerine yüz mesh'inin farklı
+  bölgelerini üçgenler halinde dönüştürüyoruz.
+*/
+
+
+const TRIANGLES = [
+
+  [10, 338, 297],
+  [10, 297, 332],
+  [10, 332, 284],
+
+  [10, 284, 251],
+  [10, 251, 389],
+  [10, 389, 356],
+
+  [10, 356, 454],
+  [10, 454, 323],
+  [10, 323, 361],
+
+  [10, 361, 288],
+  [10, 288, 397],
+  [10, 397, 365],
+
+  [10, 365, 379],
+  [10, 379, 378],
+  [10, 378, 400],
+
+  [10, 400, 377],
+  [10, 377, 152],
+  [10, 152, 148],
+
+  [10, 148, 176],
+  [10, 176, 149],
+  [10, 149, 150],
+
+  [10, 150, 136],
+  [10, 136, 172],
+  [10, 172, 58],
+
+  [10, 58, 132],
+  [10, 132, 93],
+  [10, 93, 234],
+
+  [10, 234, 127],
+  [10, 127, 162],
+  [10, 162, 21],
+
+  [10, 21, 54],
+  [10, 54, 103],
+  [10, 103, 67],
+
+  [10, 67, 109],
+  [10, 109, 10]
+];
+
+
+/* =========================================================
+   WARP FONKSİYONU
+========================================================= */
+
+function warpSourceFace(
+  image,
+  source,
+  target
+) {
+
+  /*
+    Kaynak fotoğrafın gerçek boyutları
+  */
+
+  const sw =
+    image.naturalWidth ||
+    image.width;
+
+  const sh =
+    image.naturalHeight ||
+    image.height;
+
+
+  /*
+    Kamera koordinat sistemi.
+    Hedef görüntü aynalanmış olduğu için
+    X koordinatını ters çeviriyoruz.
+  */
+
+  for (
+    const triangle
+    of TRIANGLES
+  ) {
+
+    const a =
+      triangle[0];
+
+    const b =
+      triangle[1];
+
+    const c =
+      triangle[2];
+
+
+    const s1 =
+      source[a];
+
+    const s2 =
+      source[b];
+
+    const s3 =
+      source[c];
+
+
+    const t1 =
+      target[a];
+
+    const t2 =
+      target[b];
+
+    const t3 =
+      target[c];
+
+
+    if (
+      !s1 ||
+      !s2 ||
+      !s3 ||
+      !t1 ||
+      !t2 ||
+      !t3
+    ) {
+      continue;
+    }
+
+
+    const sx1 =
+      s1.x * sw;
+
+    const sy1 =
+      s1.y * sh;
+
+    const sx2 =
+      s2.x * sw;
+
+    const sy2 =
+      s2.y * sh;
+
+    const sx3 =
+      s3.x * sw;
+
+    const sy3 =
+      s3.y * sh;
+
+
+    const tx1 =
+      (1 - t1.x) *
+      canvas.width;
+
+    const ty1 =
+      t1.y *
+      canvas.height;
+
+    const tx2 =
+      (1 - t2.x) *
+      canvas.width;
+
+    const ty2 =
+      t2.y *
+      canvas.height;
+
+    const tx3 =
+      (1 - t3.x) *
+      canvas.width;
+
+    const ty3 =
+      t3.y *
+      canvas.height;
+
+
+    drawTriangle(
+      image,
+
+      sx1,
+      sy1,
+      sx2,
+      sy2,
+      sx3,
+      sy3,
+
+      tx1,
+      ty1,
+      tx2,
+      ty2,
+      tx3,
+      ty3
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   AFFINE TRIANGLE
+========================================================= */
+
+function drawTriangle(
+  image,
+
+  sx1,
+  sy1,
+  sx2,
+  sy2,
+  sx3,
+  sy3,
+
+  dx1,
+  dy1,
+  dx2,
+  dy2,
+  dx3,
+  dy3
+) {
+
+  const denominator =
+
+    sx1 * (
+      sy2 - sy3
+    )
+
+    +
+
+    sx2 * (
+      sy3 - sy1
+    )
+
+    +
+
+    sx3 * (
+      sy1 - sy2
+    );
+
+
+  if (
+    Math.abs(denominator) <
+    0.00001
+  ) {
+    return;
+  }
+
+
+  const a =
+
+    (
+      dx1 * (
+        sy2 - sy3
+      )
+
+      +
+
+      dx2 * (
+        sy3 - sy1
+      )
+
+      +
+
+      dx3 * (
+        sy1 - sy2
+      )
+    ) / denominator;
+
+
+  const b =
+
+    (
+      dy1 * (
+        sy2 - sy3
+      )
+
+      +
+
+      dy2 * (
+        sy3 - sy1
+      )
+
+      +
+
+      dy3 * (
+        sy1 - sy2
+      )
+    ) / denominator;
+
+
+  const c =
+
+    (
+      dx1 * (
+        sx3 - sx2
+      )
+
+      +
+
+      dx2 * (
+        sx1 - sx3
+      )
+
+      +
+
+      dx3 * (
+        sx2 - sx1
+      )
+    ) / denominator;
+
+
+  const d =
+
+    (
+      dy1 * (
+        sx3 - sx2
+      )
+
+      +
+
+      dy2 * (
+        sx1 - sx3
+      )
+
+      +
+
+      dy3 * (
+        sx2 - sx1
+      )
+    ) / denominator;
+
+
+  const e =
+
+    (
+      dx1 * (
+        sx2 * sy3 -
+        sx3 * sy2
+      )
+
+      +
+
+      dx2 * (
+        sx3 * sy1 -
+        sx1 * sy3
+      )
+
+      +
+
+      dx3 * (
+        sx1 * sy2 -
+        sx2 * sy1
+      )
+    ) / denominator;
+
+
+  const f =
+
+    (
+      dy1 * (
+        sx2 * sy3 -
+        sx3 * sy2
+      )
+
+      +
+
+      dy2 * (
+        sx3 * sy1 -
+        sx1 * sy3
+      )
+
+      +
+
+      dy3 * (
+        sx1 * sy2 -
+        sx2 * sy1
+      )
+    ) / denominator;
+
+
+  ctx.save();
+
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    dx1,
+    dy1
+  );
+
+  ctx.lineTo(
+    dx2,
+    dy2
+  );
+
+  ctx.lineTo(
+    dx3,
+    dy3
+  );
+
+  ctx.closePath();
+
+  ctx.clip();
+
+
+  ctx.setTransform(
+    a,
+    b,
+    c,
+    d,
+    e,
+    f
+  );
+
+
+  ctx.drawImage(
+    image,
+    0,
+    0
+  );
+
+
+  ctx.restore();
+
+}
+
+
+/* =========================================================
+   BAŞLAT
+========================================================= */
+
+init();
 
 </script>
 
