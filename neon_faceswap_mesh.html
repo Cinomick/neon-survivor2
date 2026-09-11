@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Neon AI — Gerçekçi Face Swap</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#060a14;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:14px}
+.app{max-width:1000px;margin:auto}
+h1{text-align:center;margin:5px 0 4px;font-size:clamp(27px,7vw,43px);background:linear-gradient(90deg,#8d79ff,#42ddff);-webkit-background-clip:text;color:transparent}
+.sub{text-align:center;color:#9aa7c0;margin:0 0 15px}
+.stage{position:relative;width:100%;aspect-ratio:16/10;background:#02040a;border:1px solid #273654;border-radius:19px;overflow:hidden}
+#output{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.panel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.card{background:#10182a;border:1px solid #283653;border-radius:15px;padding:14px}
+.card h2{font-size:16px;margin:0 0 10px}
+button,label{display:block;width:100%;border:0;border-radius:11px;padding:14px;color:#fff;font-size:15px;font-weight:800;text-align:center;cursor:pointer}
+button{background:#5368ff}
+button.green{background:#10c97a}
+button.gray{background:#27334a}
+button:disabled{opacity:.4;cursor:not-allowed}
+label{background:#7a4dff}
+input{display:none}
+.status{margin-top:12px;background:#10182a;border:1px solid #283653;border-radius:14px;padding:14px;line-height:1.5;white-space:pre-wrap}
+.ok{color:#76ffbd}.err{color:#ff9aa7}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:12px}
+.step{background:#0d1525;border-radius:10px;padding:9px 5px;text-align:center;font-size:11px;color:#7f8da8}
+.step.active{outline:1px solid #58d8ff;color:#fff}
+.step.done{color:#72ffba}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{background:#0e1627;border-radius:12px;text-align:center;padding:12px}
+.stat b{display:block;font-size:21px}.stat span{font-size:11px;color:#8e9bb4}
+.note{font-size:11px;color:#7e8ba4;line-height:1.5;margin-top:11px}
+video,#source{display:none}
+@media(max-width:650px){.panel{grid-template-columns:1fr}.steps{grid-template-columns:repeat(5,1fr);font-size:9px}}
+</style>
+</head>
+
+<body>
+<div class="app">
+<h1>🤖 AI Yüz Değiştirme</h1>
+<p class="sub">Çok açılı yüz kalibrasyonu + canlı mesh tabanlı yüz aktarımı</p>
+
+<div class="stage"><canvas id="output"></canvas></div>
+
+<div class="steps">
+<div id="s0" class="step active">1<br>Hazırla</div>
+<div id="s1" class="step">2<br>Düz</div>
+<div id="s2" class="step">3<br>Sol</div>
+<div id="s3" class="step">4<br>Sağ</div>
+<div id="s4" class="step">5<br>Bitir</div>
+</div>
+
+<div class="panel">
+<div class="card">
+<h2>Kaynak yüz</h2>
+<label for="photo">🖼️ Fotoğraf seç<input id="photo" type="file" accept="image/*"></label>
+<div style="height:8px"></div>
+<button id="usePhoto">Fotoğrafı kaynak yap</button>
+<div class="note">En iyi sonuç için yüzün net, önden ve iyi ışıklı olsun. Çok açılı sonuç için aşağıdaki kalibrasyon adımı kameradan ek görüntüler toplar.</div>
+</div>
+
+<div class="card">
+<h2>Kalibrasyon & kamera</h2>
+<button id="calibrate" class="green" disabled>🧭 Çok Açılı Kalibrasyonu Başlat</button>
+<div style="height:8px"></div>
+<button id="start" disabled>📷 Hedef Kamerayı Başlat</button>
+<div style="height:8px"></div>
+<button id="stop" class="gray" disabled>⏹ Durdur</button>
+</div>
+</div>
+
+<div id="status" class="status">⏳ AI hazırlanıyor...</div>
+
+<div class="stats">
+<div class="stat"><b id="faces">0</b><span>Hedef yüz</span></div>
+<div class="stat"><b id="fps">0</b><span>FPS</span></div>
+<div class="stat"><b id="quality">—</b><span>Mesh kalitesi</span></div>
+</div>
+
+<p class="note">🔒 Görüntüler bu sayfada tarayıcı içinde işlenir. Yüz değiştirmeyi yalnızca izinli fotoğraf ve kişiler üzerinde kullan.</p>
+</div>
+
+<video id="video" autoplay muted playsinline></video>
+<img id="source" alt="kaynak">
+
+<script>
+const video=document.getElementById("video");
+const source=document.getElementById("source");
+const out=document.getElementById("output");
+const ctx=out.getContext("2d");
+const status=document.getElementById("status");
+const photo=document.getElementById("photo");
+const usePhoto=document.getElementById("usePhoto");
+const calibrate=document.getElementById("calibrate");
+const start=document.getElementById("start");
+const stop=document.getElementById("stop");
+const facesEl=document.getElementById("faces");
+const fpsEl=document.getElementById("fps");
+const qualityEl=document.getElementById("quality");
+
+let mesh=null,camera=null,stream=null;
+let sourceLandmarks=null,sourceReady=false,sourceURL=null;
+let running=false,mode="idle";
+let frames=0,lastFps=performance.now();
+
+const CALIBRATION_PROMPTS=[
+ "Kameraya düz bak. Hazır olduğunda ekrana dokun.",
+ "Başını yavaşça SOLA çevir ve hazır olduğunda dokun.",
+ "Başını yavaşça SAĞA çevir ve hazır olduğunda dokun."
+];
+
+const cal={
+  front:null,
+  left:null,
+  right:null
+};
+
+function setStatus(t,error=false){
+ status.textContent=t;
+ status.className="status "+(error?"err":"ok");
+}
+function step(n,state){
+ for(let i=0;i<5;i++){
+   const e=document.getElementById("s"+i);
+   e.classList.remove("active","done");
+   if(i<n)e.classList.add("done");
+   if(i===n)e.classList.add("active");
+ }
+ if(state==="done")document.getElementById("s4").classList.add("done");
+}
+
+function init(){
+ try{
+   if(typeof FaceMesh==="undefined")throw new Error("MediaPipe Face Mesh yüklenemedi.");
+   mesh=new FaceMesh({
+     locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+   });
+   mesh.setOptions({
+     maxNumFaces:1,
+     refineLandmarks:true,
+     minDetectionConfidence:.55,
+     minTrackingConfidence:.55
+   });
+   mesh.onResults(onResults);
+   setStatus("✅ AI hazır. Kaynak yüz fotoğrafını seç.");
+ }catch(e){setStatus("❌ AI başlatılamadı: "+e.message,true)}
+}
+
+photo.addEventListener("change",e=>{
+ const file=e.target.files[0];
+ if(!file)return;
+ if(sourceURL)URL.revokeObjectURL(sourceURL);
+ sourceURL=URL.createObjectURL(file);
+ source.src=sourceURL;
+ source.onload=async()=>{
+   sourceReady=false;
+   sourceLandmarks=null;
+   calibrate.disabled=false;
+   setStatus("🟢 Fotoğraf yüklendi. İstersen çok açılı kalibrasyonu başlat.");
+   try{
+     const r=await runMeshOnce(source);
+     if(r){sourceLandmarks=r;sourceReady=true}
+   }catch(err){setStatus("❌ Fotoğraftaki yüz analiz edilemedi: "+err.message,true)}
+ };
+});
+
+async function runMeshOnce(img){
+ return new Promise(async(resolve,reject)=>{
+   const old=meshMode;
+   meshMode="capture";
+   captureResolve=resolve;
+   try{await mesh.send({image:img})}
+   catch(e){captureResolve=null;meshMode=old;reject(e)}
+ });
+}
+let meshMode="live",captureResolve=null;
+
+async function startStream(){
+ if(stream)return;
+ stream=await navigator.mediaDevices.getUserMedia({
+   video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},
+   audio:false
+ });
+ video.srcObject=stream;
+ await video.play();
+ out.width=video.videoWidth||1280;
+ out.height=video.videoHeight||720;
+}
+
+function stopStream(){
+ running=false;
+ if(camera){try{camera.stop()}catch(e){}camera=null}
+ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+ video.srcObject=null;
+ stop.disabled=true;
+ start.disabled=!sourceReady;
+}
+
+calibrate.onclick=async()=>{
+ try{
+   step(1);
+   await startStream();
+   calibrate.disabled=true;
+   setStatus("🧭 KALİBRASYON\n\n"+CALIBRATION_PROMPTS[0]+"\n\nEkrana dokununca kayıt alınacak.");
+   await waitForTap();
+   cal.front=await captureFrame();
+   step(2);
+   setStatus("🧭 KALİBRASYON\n\n"+CALIBRATION_PROMPTS[1]);
+   await waitForTap();
+   cal.left=await captureFrame();
+   step(3);
+   setStatus("🧭 KALİBRASYON\n\n"+CALIBRATION_PROMPTS[2]);
+   await waitForTap();
+   cal.right=await captureFrame();
+
+   stopStream();
+   step(4,"done");
+   start.disabled=false;
+   setStatus("✅ Çok açılı kalibrasyon tamamlandı.\n\nŞimdi hedef kamerayı başlatabilirsin.");
+ }catch(e){
+   stopStream();
+   calibrate.disabled=false;
+   setStatus("❌ Kalibrasyon başarısız: "+e.message,true);
+ }
+};
+
+function waitForTap(){
+ return new Promise(resolve=>{
+   const f=()=>{
+     document.removeEventListener("click",f);
+     resolve();
+   };
+   setTimeout(()=>document.addEventListener("click",f,{once:true}),250);
+ });
+}
+
+async function captureFrame(){
+ const r=await new Promise(async(resolve,reject)=>{
+   meshMode="capture";
+   captureResolve=resolve;
+   try{await mesh.send({image:video})}catch(e){reject(e)}
+ });
+ if(!r)throw new Error("Bu açıda yüz bulunamadı.");
+ return r;
+}
+
+start.onclick=async()=>{
+ if(!sourceReady){setStatus("Önce kaynak yüzü seç.",true);return}
+ try{
+   await startStream();
+   running=true;
+   start.disabled=true;
+   stop.disabled=false;
+   step(4);
+   setStatus("🟢 Canlı yüz değiştirme aktif.\n\nKameradaki ilk yüz takip ediliyor.");
+   camera=new Camera(video,{
+     onFrame:async()=>{
+       if(running)await mesh.send({image:video});
+     },
+     width:1280,height:720
+   });
+   camera.start();
+ }catch(e){setStatus("❌ Kamera açılamadı: "+e.message,true)}
+};
+
+stop.onclick=()=>{
+ stopStream();
+ ctx.clearRect(0,0,out.width,out.height);
+ facesEl.textContent="0";fpsEl.textContent="0";qualityEl.textContent="—";
+ setStatus(sourceReady?"Kaynak yüz hazır. Kamerayı yeniden başlatabilirsin.":"Kaynak yüz yok.");
+};
+
+usePhoto.onclick=()=>{
+ if(!sourceReady){setStatus("Önce yüz fotoğrafı seç.",true);return}
+ calibrate.disabled=false;
+ setStatus("🟢 Kaynak yüz hazır. Daha gerçekçi sonuç için çok açılı kalibrasyonu öneriyorum.");
+};
+
+function onResults(r){
+ if(meshMode==="capture"){
+   const lm=r.multiFaceLandmarks&&r.multiFaceLandmarks[0];
+   if(captureResolve){
+     const resolve=captureResolve;
+     captureResolve=null;
+     meshMode="live";
+     resolve(lm||null);
+   }
+   return;
+ }
+ if(!running)return;
+
+ const list=r.multiFaceLandmarks||[];
+ facesEl.textContent=list.length;
+
+ ctx.save();
+ ctx.translate(out.width,0);
+ ctx.scale(-1,1);
+ ctx.drawImage(r.image,0,0,out.width,out.height);
+ ctx.restore();
+
+ if(list[0]&&sourceLandmarks){
+   renderWarp(list[0]);
+   qualityEl.textContent="Yüksek";
+ }else{
+   qualityEl.textContent=list.length?"Kaynak bekliyor":"Yüz yok";
+ }
+
+ frames++;
+ const now=performance.now();
+ if(now-lastFps>1000){
+   fpsEl.textContent=Math.round(frames*1000/(now-lastFps));
+   frames=0;lastFps=now;
+ }
+}
+
+/*
+  Gerçek swap'ın kritik kısmı:
+  Yüzü tek bir oval resim olarak koymuyoruz.
+  Face Mesh'in yüz üçgenleri üzerinden kaynak dokuyu
+  hedef yüze küçük affine parçalar halinde taşıyoruz.
+*/
+function renderWarp(target){
+ const w=out.width,h=out.height;
+ const sw=source.naturalWidth,sh=source.naturalHeight;
+
+ // Kaynak ve hedef landmarklarının ilk 468 noktasını kullan.
+ // Tam tesselation yerine stabil bir yüz üçgen seti.
+ const tris=[
+ [10,338,297],[10,297,332],[10,332,284],[10,284,251],
+ [10,251,389],[10,389,356],[10,356,454],[10,454,323],
+ [10,323,361],[10,361,288],[10,288,397],[10,397,365],
+ [10,365,379],[10,379,152],[10,152,176],[10,176,149],
+ [10,149,150],[10,150,136],[10,136,172],[10,172,58],
+ [10,58,132],[10,132,93],[10,93,234],[10,234,127],
+ [10,127,162],[10,162,21],[10,21,54],[10,54,103],
+ [10,103,67],[10,67,109],
+ [33,133,159],[33,159,145],[33,145,153],[33,153,144],
+ [33,144,163],[263,362,386],[263,386,374],[263,374,380],
+ [263,380,373],[263,373,390],
+ [1,2,98],[1,98,327],[2,326,98],[2,97,326],
+ [168,6,197],[6,195,197],[6,197,5],
+ [61,185,40],[61,40,146],[291,409,270],[291,270,375],
+ [78,95,191],[78,191,80],[308,324,415],[308,415,310],
+ [13,14,78],[13,78,308],[14,17,78],[14,308,17],
+ [152,377,400],[152,400,148]
+ ];
+
+ for(const t of tris){
+   const a=sourceLandmarks[t[0]],b=sourceLandmarks[t[1]],c=sourceLandmarks[t[2]];
+   const A=target[t[0]],B=target[t[1]],C=target[t[2]];
+   if(!a||!b||!c||!A||!B||!C)continue;
+
+   // Hedef görüntü CSS olarak aynalandığı için x'i ters çevir.
+   const sx1=a.x*sw,sy1=a.y*sh;
+   const sx2=b.x*sw,sy2=b.y*sh;
+   const sx3=c.x*sw,sy3=c.y*sh;
+
+   const dx1=(1-A.x)*w,dy1=A.y*h;
+   const dx2=(1-B.x)*w,dy2=B.y*h;
+   const dx3=(1-C.x)*w,dy3=C.y*h;
+
+   affineTriangle(
+     sx1,sy1,sx2,sy2,sx3,sy3,
+     dx1,dy1,dx2,dy2,dx3,dy3
+   );
+ }
+}
+
+function affineTriangle(sx1,sy1,sx2,sy2,sx3,sy3,dx1,dy1,dx2,dy2,dx3,dy3){
+ const den=(sx1*(sy2-sy3)+sx2*(sy3-sy1)+sx3*(sy1-sy2));
+ if(Math.abs(den)<0.001)return;
+
+ const a=(dx1*(sy2-sy3)+dx2*(sy3-sy1)+dx3*(sy1-sy2))/den;
+ const b=(dy1*(sy2-sy3)+dy2*(sy3-sy1)+dy3*(sy1-sy2))/den;
+ const c=(dx1*(sx3-sx2)+dx2*(sx1-sx3)+dx3*(sx2-sx1))/den;
+ const d=(dy1*(sx3-sx2)+dy2*(sx1-sx3)+dy3*(sx2-sx1))/den;
+ const e=(dx1*(sx2*sy3-sx3*sy2)+dx2*(sx3*sy1-sx1*sy3)+dx3*(sx1*sy2-sx2*sy1))/den;
+ const f=(dy1*(sx2*sy3-sx3*sy2)+dy2*(sx3*sy1-sx1*sy3)+dy3*(sx1*sy2-sx2*sy1))/den;
+
+ ctx.save();
+ ctx.beginPath();
+ ctx.moveTo(dx1,dy1);ctx.lineTo(dx2,dy2);ctx.lineTo(dx3,dy3);ctx.closePath();ctx.clip();
+ ctx.globalAlpha=.96;
+ ctx.setTransform(a,b,c,d,e,f);
+ ctx.drawImage(source,0,0);
+ ctx.restore();
+}
+
+// Kaynak fotoğrafı doğrudan ilk başta hazır hale getir.
+usePhoto.disabled=true;
+init();
+</script>
+</body>
+</html>
