@@ -3,2565 +3,732 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport"
-      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+      content="width=device-width,initial-scale=1,viewport-fit=cover">
 
-<title>Neon Face Swap</title>
-
-<script
-  src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js"
-  crossorigin="anonymous">
-</script>
+<title>Neon AI Face Swap</title>
 
 <style>
-* {
-  box-sizing: border-box;
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    min-height:100vh;
+    background:#080b12;
+    color:#fff;
+    font-family:Arial,sans-serif;
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at top,#17233d 0%,#080b13 55%,#05070c 100%);
-  color: white;
-  font-family: Arial,sans-serif;
-  padding: 16px;
+.container{
+    width:min(1000px,94%);
+    margin:auto;
+    padding:22px 0;
 }
 
-.app {
-  width: min(100%,900px);
-  margin: auto;
+h1{
+    margin:0 0 8px;
+    font-size:28px;
 }
 
-h1 {
-  margin: 0 0 6px;
-  font-size: 28px;
+.subtitle{
+    color:#9ba4b5;
+    margin-bottom:20px;
 }
 
-.subtitle {
-  color: #aeb8cc;
-  margin-bottom: 18px;
+.panel{
+    background:#111722;
+    border:1px solid #252e3e;
+    border-radius:18px;
+    padding:18px;
+    margin-bottom:16px;
 }
 
-.panel {
-  background: rgba(15,20,32,.94);
-  border: 1px solid #27344f;
-  border-radius: 18px;
-  padding: 16px;
-  margin-bottom: 14px;
+label{
+    display:block;
+    font-weight:bold;
+    margin-bottom:8px;
 }
 
-label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 8px;
+input[type=file],
+input[type=text]{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #30394a;
+    background:#0b1018;
+    color:white;
 }
 
-input[type=file] {
-  width: 100%;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid #34425e;
-  background: #0b101b;
-  color: white;
+button{
+    border:0;
+    border-radius:12px;
+    padding:13px 18px;
+    margin-top:12px;
+    cursor:pointer;
+    font-weight:bold;
+    background:#6c5ce7;
+    color:white;
 }
 
-button {
-  width: 100%;
-  border: 0;
-  border-radius: 12px;
-  padding: 13px;
-  margin-top: 10px;
-  background: #1f6feb;
-  color: white;
-  font-size: 15px;
-  font-weight: bold;
+button:disabled{
+    opacity:.5;
+    cursor:not-allowed;
 }
 
-button:disabled {
-  opacity: .4;
+#status{
+    margin-top:12px;
+    color:#aeb8c9;
 }
 
-button.secondary {
-  background: #263148;
-}
-
-button.success {
-  background: #16875b;
-}
-
-button.warning {
-  background: #a86b15;
-}
-
-.viewer {
-  width: 100%;
-  overflow: hidden;
-  border-radius: 18px;
-  background: #02040a;
-  border: 1px solid #26334d;
-}
-
-canvas {
-  width: 100%;
-  height: auto;
-  display: block;
+.video-wrap{
+    position:relative;
+    width:100%;
+    max-width:720px;
+    margin:auto;
+    background:#000;
+    border-radius:18px;
+    overflow:hidden;
+    aspect-ratio:16/9;
 }
 
 video,
-#sourceImage {
-  display: none;
+canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
 }
 
-.status {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  background: #0b111d;
-  border: 1px solid #27344f;
-  line-height: 1.45;
+video{
+    visibility:hidden;
 }
 
-.error {
-  color: #ff8e8e;
+canvas{
+    background:#000;
 }
 
-.ok {
-  color: #73e6a8;
+.stats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:12px;
 }
 
-.warningText {
-  color: #ffd27a;
+.stat{
+    background:#0b1018;
+    border:1px solid #252e3e;
+    border-radius:10px;
+    padding:9px 12px;
+    color:#b9c2d2;
 }
 
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 8px;
-  margin-top: 10px;
+.warning{
+    color:#ffcf70;
+    font-size:14px;
+    line-height:1.5;
 }
 
-.stat {
-  background: #0b111d;
-  border: 1px solid #26334d;
-  padding: 10px;
-  border-radius: 12px;
-  text-align: center;
+.ok{
+    color:#6ee7a1;
 }
 
-.stat b {
-  display: block;
-  font-size: 18px;
-}
-
-.stat span {
-  color: #8e9bb3;
-  font-size: 12px;
-}
-
-.calibration {
-  display: none;
-  margin-top: 12px;
-  padding: 13px;
-  border-radius: 12px;
-  background: #111a2b;
-  border: 1px solid #36517d;
-}
-
-.calibration.active {
-  display: block;
-}
-
-.step {
-  margin-top: 5px;
-  color: #9fb0ca;
+.error{
+    color:#ff7777;
 }
 </style>
 </head>
 
 <body>
 
-<div class="app">
+<div class="container">
 
-<h1>🧠 Neon Face Swap</h1>
+<h1>🪄 Neon AI Face Swap</h1>
 
 <div class="subtitle">
-Kaynak yüzünü analiz et → kamerayı aç → mimik kalibrasyonu yap → canlı dene.
+Gerçek zamanlı AI yüz değiştirme prototipi
 </div>
 
 <div class="panel">
 
-<label>1️⃣ Kaynak yüz fotoğrafı</label>
+<label>1. Kaynak yüz fotoğrafı</label>
 
 <input
-  id="photo"
-  type="file"
-  accept="image/*"
+    id="sourceInput"
+    type="file"
+    accept="image/*"
 >
 
-<button id="analyze" disabled>
-🔍 Kaynak Yüzü Analiz Et
+<button id="loadSource">
+    Kaynak yüzü yükle
 </button>
 
-<div id="photoStatus" class="status">
-Henüz fotoğraf seçilmedi.
-</div>
+<div id="sourceStatus"></div>
 
 </div>
-
 
 <div class="panel">
 
-<label>2️⃣ Kamera</label>
+<label>2. AI sunucu adresi</label>
 
-<button id="openCamera" class="secondary">
-📷 Kamerayı Aç
+<input
+    id="serverUrl"
+    type="text"
+    placeholder="wss://sunucu-adresin/ws"
+>
+
+<button id="connect">
+    AI sunucusuna bağlan
 </button>
 
-<button id="stopCamera" class="secondary" disabled>
-⛔ Kamerayı Durdur
+<button id="start" disabled>
+    🪄 AI Face Swap'ı Başlat
 </button>
 
+<div id="status">
+    Sunucu bağlantısı bekleniyor...
 </div>
 
-
-<div class="viewer">
-
-<video id="video" playsinline muted></video>
-
-<canvas id="canvas"></canvas>
-
 </div>
-
 
 <div class="panel">
+
+<div class="video-wrap">
+    <video id="video"
+           autoplay
+           playsinline
+           muted></video>
+
+    <canvas id="canvas"></canvas>
+</div>
 
 <div class="stats">
 
 <div class="stat">
-<b id="faceCount">0</b>
-<span>Yüz</span>
+AI FPS:
+<span id="fps">0</span>
 </div>
 
 <div class="stat">
-<b id="landmarkCount">0</b>
-<span>Landmark</span>
+Gecikme:
+<span id="latency">0</span> ms
 </div>
 
 <div class="stat">
-<b id="fps">0</b>
-<span>FPS</span>
-</div>
-
-</div>
-
-
-<button
-  id="calibrate"
-  class="warning"
-  disabled>
-🎯 Mimik Kalibrasyonunu Başlat
-</button>
-
-
-<div id="calibration" class="calibration">
-
-<strong id="calTitle">
-Kalibrasyon
-</strong>
-
-<div id="calDescription" class="step">
--
-</div>
-
-<button id="savePose">
-✓ Bu Pozu Kaydet
-</button>
-
-</div>
-
-
-<button
-  id="swap"
-  class="success"
-  disabled>
-🪄 Face Swap'ı Başlat
-</button>
-
-
-<div id="status" class="status">
-Sistem başlatılıyor...
+Durum:
+<span id="state">Bekliyor</span>
 </div>
 
 </div>
 
 </div>
 
+<div class="panel warning">
 
-<img id="sourceImage">
+⚠️ Bu sistem yalnızca izinli kişilerin görüntüleriyle kullanılmalıdır.
+Gerçek kişileri izinsiz taklit etmek veya insanları yanıltmak için kullanma.
 
+</div>
+
+</div>
 
 <script>
 
-"use strict";
+const sourceInput =
+    document.getElementById("sourceInput");
 
+const loadSource =
+    document.getElementById("loadSource");
 
-/* =========================================================
-   ELEMENTLER
-========================================================= */
+const connectButton =
+    document.getElementById("connect");
+
+const startButton =
+    document.getElementById("start");
+
+const serverUrl =
+    document.getElementById("serverUrl");
+
+const sourceStatus =
+    document.getElementById("sourceStatus");
+
+const statusText =
+    document.getElementById("status");
+
+const stateText =
+    document.getElementById("state");
 
 const video =
-  document.getElementById("video");
+    document.getElementById("video");
 
 const canvas =
-  document.getElementById("canvas");
+    document.getElementById("canvas");
 
 const ctx =
-  canvas.getContext("2d");
+    canvas.getContext("2d");
 
-const photo =
-  document.getElementById("photo");
+const fpsText =
+    document.getElementById("fps");
 
-const sourceImage =
-  document.getElementById("sourceImage");
+const latencyText =
+    document.getElementById("latency");
 
-const analyzeBtn =
-  document.getElementById("analyze");
-
-const openCameraBtn =
-  document.getElementById("openCamera");
-
-const stopCameraBtn =
-  document.getElementById("stopCamera");
-
-const calibrateBtn =
-  document.getElementById("calibrate");
-
-const savePoseBtn =
-  document.getElementById("savePose");
-
-const swapBtn =
-  document.getElementById("swap");
-
-const statusBox =
-  document.getElementById("status");
-
-const photoStatus =
-  document.getElementById("photoStatus");
-
-const calibrationBox =
-  document.getElementById("calibration");
-
-const calTitle =
-  document.getElementById("calTitle");
-
-const calDescription =
-  document.getElementById("calDescription");
-
-const faceCountEl =
-  document.getElementById("faceCount");
-
-const landmarkCountEl =
-  document.getElementById("landmarkCount");
-
-const fpsEl =
-  document.getElementById("fps");
-
-
-/* =========================================================
-   STATE
-========================================================= */
-
-let cameraMesh = null;
-let sourceMesh = null;
-
-let stream = null;
-let animationFrame = 0;
-
+let socket = null;
+let sourceData = null;
+let swapping = false;
 let busy = false;
 
-let sourceImageLoaded = false;
-let sourceLandmarks = null;
-
-let cameraLandmarks = null;
-
-let cameraOn = false;
-let calibrationMode = false;
-
-let calibrationIndex = 0;
-
-let calibrationSamples = [];
-
-let swapOn = false;
-
-
-/* =========================================================
-   FPS
-========================================================= */
-
-let fpsFrames = 0;
+let frameCount = 0;
 let lastFpsTime = performance.now();
 
+serverUrl.value =
+    localStorage.getItem("neon_ai_server") || "";
 
-/* =========================================================
-   KALİBRASYON
-========================================================= */
-
-const CALIBRATION_STEPS = [
-
-  {
-    name: "Nötr",
-    description:
-      "Yüzünü tamamen rahat bırak. Ağzın kapalı ve kaşların doğal olsun."
-  },
-
-  {
-    name: "Gülümse",
-    description:
-      "Doğal şekilde gülümse."
-  },
-
-  {
-    name: "Ağzını Aç",
-    description:
-      "Ağzını belirgin şekilde aç."
-  },
-
-  {
-    name: "Kaşlarını Kaldır",
-    description:
-      "İki kaşını yukarı kaldır."
-  },
-
-  {
-    name: "Gözlerini Kıs",
-    description:
-      "İki gözünü hafifçe kıs."
-  }
-
-];
-
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-function setStatus(text,type="") {
-
-  statusBox.className = "status";
-
-  if(type === "error")
-    statusBox.classList.add("error");
-
-  if(type === "ok")
-    statusBox.classList.add("ok");
-
-  if(type === "warning")
-    statusBox.classList.add("warningText");
-
-  statusBox.textContent = text;
+function setStatus(text, type=""){
+    statusText.textContent = text;
+    statusText.className = type;
 }
 
-
-/* =========================================================
-   LANDMARK CLONE
-========================================================= */
-
-function cloneLandmarks(lm) {
-
-  return lm.map(p => ({
-    x:p.x,
-    y:p.y,
-    z:p.z
-  }));
-
+function setState(text){
+    stateText.textContent = text;
 }
 
+loadSource.addEventListener("click", async ()=>{
 
-/* =========================================================
-   MESAFE
-========================================================= */
-
-function distance(a,b) {
-
-  const dx = a.x-b.x;
-  const dy = a.y-b.y;
-
-  return Math.sqrt(
-    dx*dx + dy*dy
-  );
-
-}
-
-
-/* =========================================================
-   FACE MESH
-========================================================= */
-
-function createFaceMesh() {
-
-  const mesh =
-    new FaceMesh({
-
-      locateFile: file =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`
-
-    });
-
-
-  mesh.setOptions({
-
-    maxNumFaces:1,
-
-    refineLandmarks:true,
-
-    minDetectionConfidence:.5,
-
-    minTrackingConfidence:.5
-
-  });
-
-
-  return mesh;
-}
-
-
-/* =========================================================
-   INIT
-========================================================= */
-
-async function init() {
-
-  try {
-
-    cameraMesh =
-      createFaceMesh();
-
-
-    cameraMesh.onResults(results => {
-
-      if(
-        results.multiFaceLandmarks &&
-        results.multiFaceLandmarks.length
-      ){
-
-        cameraLandmarks =
-          results.multiFaceLandmarks[0];
-
-        faceCountEl.textContent = "1";
-
-        landmarkCountEl.textContent =
-          cameraLandmarks.length;
-
-
-        if(calibrationMode){
-
-          drawCalibrationPreview(
-            cameraLandmarks
-          );
-
-        }
-        else if(swapOn){
-
-          renderSwap(
-            cameraLandmarks
-          );
-
-        }
-
-      }
-      else {
-
-        cameraLandmarks = null;
-
-        faceCountEl.textContent = "0";
-
-        landmarkCountEl.textContent = "0";
-
-      }
-
-    });
-
-
-    setStatus(
-      "Hazır. Önce kaynak yüz fotoğrafını seç.",
-      "ok"
-    );
-
-  }
-  catch(error){
-
-    console.error(error);
-
-    setStatus(
-      "MediaPipe başlatılamadı: "+error.message,
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   FOTOĞRAF
-========================================================= */
-
-photo.addEventListener(
-  "change",
-  () => {
-
-    const file =
-      photo.files[0];
+    const file = sourceInput.files[0];
 
     if(!file){
-
-      analyzeBtn.disabled = true;
-
-      sourceImageLoaded = false;
-
-      return;
-
+        sourceStatus.textContent =
+            "Önce bir fotoğraf seç.";
+        sourceStatus.className = "error";
+        return;
     }
 
+    if(!file.type.startsWith("image/")){
+        sourceStatus.textContent =
+            "Geçerli bir resim seç.";
+        return;
+    }
 
-    const url =
-      URL.createObjectURL(file);
+    try{
 
+        const reader = new FileReader();
 
-    sourceImage.onload = () => {
+        reader.onload = ()=>{
+            sourceData = reader.result;
 
-      sourceImageLoaded = true;
+            sourceStatus.textContent =
+                "✅ Kaynak yüz hazır.";
 
-      analyzeBtn.disabled = false;
+            sourceStatus.className = "ok";
 
-      photoStatus.textContent =
-        "✅ Fotoğraf yüklendi.";
+            if(socket &&
+               socket.readyState === WebSocket.OPEN){
 
-    };
+                sendSource();
+            }
+        };
 
+        reader.onerror = ()=>{
+            sourceStatus.textContent =
+                "Fotoğraf okunamadı.";
+        };
 
-    sourceImage.onerror = () => {
+        reader.readAsDataURL(file);
 
-      sourceImageLoaded = false;
+    }catch(err){
 
-      analyzeBtn.disabled = true;
+        sourceStatus.textContent =
+            "Hata: " + err.message;
+    }
 
-      photoStatus.textContent =
-        "❌ Fotoğraf yüklenemedi.";
+});
 
-    };
+function sendSource(){
 
+    if(!socket ||
+       socket.readyState !== WebSocket.OPEN ||
+       !sourceData){
 
-    sourceImage.src = url;
+        return;
+    }
 
-  }
-);
+    socket.send(JSON.stringify({
+        type:"source",
+        image:sourceData
+    }));
 
+    setStatus(
+        "Kaynak yüz AI modeline gönderiliyor..."
+    );
+}
 
-/* =========================================================
-   TEK SEFERLİK FACE DETECTION
-========================================================= */
+connectButton.addEventListener("click", ()=>{
 
-function detectOnce(
-  mesh,
-  image,
-  timeoutMs=15000
-){
+    let url =
+        serverUrl.value.trim();
 
-  return new Promise(
-    async(resolve,reject)=>{
+    if(!url){
 
-      let finished = false;
-
-      const timeout =
-        setTimeout(
-          () => {
-
-            if(finished)
-              return;
-
-            finished = true;
-
-            reject(
-              new Error(
-                "Yüz analizi zaman aşımına uğradı."
-              )
-            );
-
-          },
-          timeoutMs
+        setStatus(
+            "WebSocket sunucu adresini gir.",
+            "error"
         );
 
+        return;
+    }
 
-      mesh.onResults(
-        results => {
+    localStorage.setItem(
+        "neon_ai_server",
+        url
+    );
 
-          if(finished)
-            return;
+    if(socket){
+        socket.close();
+    }
 
+    setStatus("AI sunucusuna bağlanılıyor...");
+    setState("Bağlanıyor");
 
-          if(
-            results.multiFaceLandmarks &&
-            results.multiFaceLandmarks.length
-          ){
+    try{
 
-            finished = true;
+        socket = new WebSocket(url);
 
-            clearTimeout(timeout);
+    }catch(err){
 
-            resolve(
-              results.multiFaceLandmarks[0]
-            );
+        setStatus(
+            "Bağlantı oluşturulamadı: "+err.message,
+            "error"
+        );
 
-          }
+        return;
+    }
 
+    socket.onopen = ()=>{
+
+        setStatus(
+            "✅ AI sunucusuna bağlandı.",
+            "ok"
+        );
+
+        setState("Bağlı");
+
+        startButton.disabled = false;
+
+        if(sourceData){
+            sendSource();
         }
-      );
+    };
 
+    socket.onmessage = event => {
 
-      try {
+        try{
 
-        await mesh.send({
-          image:image
-        });
+            const data =
+                JSON.parse(event.data);
 
-      }
-      catch(error){
+            if(data.type === "ready"){
 
-        if(finished)
-          return;
+                setStatus(
+                    "AI modeli hazır.",
+                    "ok"
+                );
 
-        finished = true;
+            }
 
-        clearTimeout(timeout);
+            else if(data.type === "source-ready"){
 
-        reject(error);
+                setStatus(
+                    "✅ Kaynak yüz AI tarafından algılandı.",
+                    "ok"
+                );
 
-      }
+                startButton.disabled = false;
+            }
 
-    }
-  );
+            else if(data.type === "frame"){
 
-}
+                drawResult(data.image);
 
+                busy = false;
 
-/* =========================================================
-   KAYNAK ANALİZİ
-========================================================= */
+                frameCount++;
 
-analyzeBtn.addEventListener(
-  "click",
-  async()=>{
+                const now =
+                    performance.now();
 
-    if(!sourceImageLoaded)
-      return;
+                if(now-lastFpsTime >= 1000){
 
+                    fpsText.textContent =
+                        frameCount;
 
-    analyzeBtn.disabled = true;
+                    frameCount = 0;
+                    lastFpsTime = now;
+                }
 
-    photoStatus.textContent =
-      "⏳ Kaynak yüz analiz ediliyor...";
+            }
 
+            else if(data.type === "error"){
 
-    try {
+                busy = false;
 
-      sourceMesh =
-        createFaceMesh();
+                setStatus(
+                    "AI: "+data.message,
+                    "error"
+                );
+            }
 
+        }catch(err){
 
-      const lm =
-        await detectOnce(
-          sourceMesh,
-          sourceImage
+            busy = false;
+
+            console.error(err);
+        }
+    };
+
+    socket.onerror = ()=>{
+
+        setStatus(
+            "AI sunucusu bağlantı hatası.",
+            "error"
         );
 
+        setState("Hata");
+    };
 
-      if(!lm)
-        throw new Error(
-          "Fotoğrafta yüz bulunamadı."
+    socket.onclose = ()=>{
+
+        busy = false;
+
+        setState("Bağlantı kapalı");
+
+        startButton.disabled = true;
+
+        if(swapping){
+            swapping = false;
+            startButton.textContent =
+                "🪄 AI Face Swap'ı Başlat";
+        }
+    };
+
+});
+
+startButton.addEventListener("click",
+async ()=>{
+
+    if(!sourceData){
+
+        setStatus(
+            "Önce kaynak yüz fotoğrafını yükle.",
+            "error"
         );
 
-
-      sourceLandmarks =
-        cloneLandmarks(lm);
-
-
-      photoStatus.innerHTML =
-        `✅ Kaynak yüz analiz edildi.
-        <br>${sourceLandmarks.length} landmark bulundu.`;
-
-
-      calibrateBtn.disabled = false;
-
-
-      setStatus(
-        "Kaynak yüz hazır. Kamerayı açıp kalibrasyona başlayabilirsin.",
-        "ok"
-      );
-
-    }
-    catch(error){
-
-      console.error(error);
-
-      photoStatus.innerHTML =
-        `<span class="error">
-        ❌ ${error.message}
-        </span>`;
-
-      analyzeBtn.disabled = false;
-
+        return;
     }
 
-  }
-);
+    if(!socket ||
+       socket.readyState !== WebSocket.OPEN){
 
+        setStatus(
+            "Önce AI sunucusuna bağlan.",
+            "error"
+        );
 
-/* =========================================================
-   KAMERA
-========================================================= */
-
-async function openCamera(){
-
-  if(cameraOn)
-    return;
-
-
-  try {
-
-    stream =
-      await navigator.mediaDevices.getUserMedia({
-
-        video:{
-
-          facingMode:"user",
-
-          width:{
-            ideal:1280
-          },
-
-          height:{
-            ideal:720
-          }
-
-        },
-
-        audio:false
-
-      });
-
-
-    video.srcObject =
-      stream;
-
-
-    await video.play();
-
-
-    cameraOn = true;
-
-
-    canvas.width =
-      video.videoWidth || 1280;
-
-    canvas.height =
-      video.videoHeight || 720;
-
-
-    openCameraBtn.disabled = true;
-
-    stopCameraBtn.disabled = false;
-
-
-    setStatus(
-      "📷 Kamera açık.",
-      "ok"
-    );
-
-
-    animationFrame =
-      requestAnimationFrame(loop);
-
-  }
-  catch(error){
-
-    console.error(error);
-
-    setStatus(
-      "❌ Kamera açılamadı: "+error.message,
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   CAMERA LOOP
-========================================================= */
-
-async function loop(){
-
-  if(!cameraOn)
-    return;
-
-
-  if(
-    video.readyState >= 2 &&
-    !busy
-  ){
-
-    busy = true;
-
-
-    try {
-
-      await cameraMesh.send({
-        image:video
-      });
-
+        return;
     }
-    catch(error){
 
-      console.error(error);
+    if(!swapping){
+
+        try{
+
+            const stream =
+                await navigator.mediaDevices
+                    .getUserMedia({
+                        video:{
+                            facingMode:"user",
+                            width:{ideal:1280},
+                            height:{ideal:720}
+                        },
+                        audio:false
+                    });
+
+            video.srcObject = stream;
+
+            await video.play();
+
+            canvas.width =
+                video.videoWidth || 640;
+
+            canvas.height =
+                video.videoHeight || 480;
+
+            swapping = true;
+
+            startButton.textContent =
+                "⛔ AI Face Swap'ı Durdur";
+
+            setState("AI aktif");
+            setStatus(
+                "Kamera başlatıldı. AI işliyor...",
+                "ok"
+            );
+
+            requestAnimationFrame(loop);
+
+        }catch(err){
+
+            setStatus(
+                "Kamera açılamadı: "+err.message,
+                "error"
+            );
+        }
+
+    }else{
+
+        stopCamera();
 
     }
 
-
-    busy = false;
-
-  }
-
-
-  updateFPS();
-
-
-  animationFrame =
-    requestAnimationFrame(loop);
-
-}
-
-
-/* =========================================================
-   FPS
-========================================================= */
-
-function updateFPS(){
-
-  fpsFrames++;
-
-  const now =
-    performance.now();
-
-
-  if(now-lastFpsTime >= 1000){
-
-    fpsEl.textContent =
-      fpsFrames;
-
-    fpsFrames = 0;
-
-    lastFpsTime = now;
-
-  }
-
-}
-
-
-/* =========================================================
-   KAMERAYI DURDUR
-========================================================= */
+});
 
 function stopCamera(){
 
-  cameraOn = false;
+    swapping = false;
 
-  cancelAnimationFrame(
-    animationFrame
-  );
+    if(video.srcObject){
 
+        video.srcObject
+            .getTracks()
+            .forEach(track=>track.stop());
 
-  if(stream){
-
-    stream
-      .getTracks()
-      .forEach(
-        track => track.stop()
-      );
-
-    stream = null;
-
-  }
-
-
-  video.srcObject = null;
-
-  openCameraBtn.disabled = false;
-
-  stopCameraBtn.disabled = true;
-
-  cameraLandmarks = null;
-
-
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  setStatus(
-    "Kamera durduruldu."
-  );
-
-}
-
-
-openCameraBtn.onclick =
-  openCamera;
-
-stopCameraBtn.onclick =
-  stopCamera;
-
-
-/* =========================================================
-   KALİBRASYONU BAŞLAT
-========================================================= */
-
-calibrateBtn.onclick =
-  async()=>{
-
-    if(!sourceLandmarks){
-
-      setStatus(
-        "Önce kaynak yüzünü analiz et.",
-        "warning"
-      );
-
-      return;
-
+        video.srcObject = null;
     }
 
+    busy = false;
 
-    if(!cameraOn)
-      await openCamera();
+    startButton.textContent =
+        "🪄 AI Face Swap'ı Başlat";
 
+    setState("Bekliyor");
 
-    calibrationMode = true;
-
-    swapOn = false;
-
-    calibrationIndex = 0;
-
-    calibrationSamples = [];
-
-
-    calibrationBox
-      .classList
-      .add("active");
-
-
-    calibrateBtn.style.display =
-      "none";
-
-
-    showCalibrationStep();
-
-  };
-
-
-/* =========================================================
-   KALİBRASYON ADIMI
-========================================================= */
-
-function showCalibrationStep(){
-
-  const step =
-    CALIBRATION_STEPS[
-      calibrationIndex
-    ];
-
-
-  calTitle.textContent =
-    `${calibrationIndex+1}/${CALIBRATION_STEPS.length} — ${step.name}`;
-
-
-  calDescription.textContent =
-    step.description;
-
-
-  savePoseBtn.textContent =
-    `✓ ${step.name} Pozunu Kaydet`;
-
+    setStatus(
+        "AI Face Swap durduruldu."
+    );
 }
 
+function loop(){
 
-/* =========================================================
-   KALİBRASYON KAYDET
-========================================================= */
-
-savePoseBtn.onclick =
-  ()=>{
-
-    if(!cameraLandmarks){
-
-      setStatus(
-        "Kamerada yüz bulunamadı.",
-        "warning"
-      );
-
-      return;
-
+    if(!swapping){
+        return;
     }
 
+    if(video.readyState >= 2 &&
+       !busy &&
+       socket &&
+       socket.readyState === WebSocket.OPEN){
 
-    const snap =
-      document.createElement("canvas");
+        sendFrame();
+    }
 
+    setTimeout(
+        ()=>requestAnimationFrame(loop),
+        70
+    );
+}
 
-    snap.width =
-      video.videoWidth || 1280;
+function sendFrame(){
 
-    snap.height =
-      video.videoHeight || 720;
+    if(video.videoWidth <= 0 ||
+       video.videoHeight <= 0){
 
+        return;
+    }
 
-    snap
-      .getContext("2d")
-      .drawImage(
+    const maxWidth = 640;
+
+    const scale =
+        Math.min(
+            1,
+            maxWidth / video.videoWidth
+        );
+
+    const width =
+        Math.round(
+            video.videoWidth * scale
+        );
+
+    const height =
+        Math.round(
+            video.videoHeight * scale
+        );
+
+    const temp =
+        document.createElement("canvas");
+
+    temp.width = width;
+    temp.height = height;
+
+    const tempCtx =
+        temp.getContext("2d");
+
+    tempCtx.drawImage(
         video,
         0,
         0,
-        snap.width,
-        snap.height
-      );
-
-
-    calibrationSamples.push({
-
-      name:
-        CALIBRATION_STEPS[
-          calibrationIndex
-        ].name,
-
-      landmarks:
-        cloneLandmarks(
-          cameraLandmarks
-        ),
-
-      image:snap,
-
-      metrics:
-        calculateExpressionMetrics(
-          cameraLandmarks
-        )
-
-    });
-
-
-    calibrationIndex++;
-
-
-    if(
-      calibrationIndex >=
-      CALIBRATION_STEPS.length
-    ){
-
-      finishCalibration();
-
-    }
-    else{
-
-      showCalibrationStep();
-
-    }
-
-  };
-
-
-/* =========================================================
-   KALİBRASYON BİTİŞ
-========================================================= */
-
-function finishCalibration(){
-
-  calibrationMode = false;
-
-  calibrationBox
-    .classList
-    .remove("active");
-
-
-  calibrateBtn.style.display =
-    "block";
-
-  calibrateBtn.disabled = true;
-
-  swapBtn.disabled = false;
-
-
-  setStatus(
-    "✅ Kalibrasyon tamamlandı. Face Swap'a başlayabilirsin.",
-    "ok"
-  );
-
-}
-
-
-/* =========================================================
-   KALİBRASYON PREVIEW
-========================================================= */
-
-function drawCalibrationPreview(lm){
-
-  ctx.save();
-
-  ctx.translate(
-    canvas.width,
-    0
-  );
-
-  ctx.scale(-1,1);
-
-  ctx.drawImage(
-    video,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  ctx.restore();
-
-
-  drawLandmarks(
-    lm
-  );
-
-}
-
-
-/* =========================================================
-   LANDMARK PREVIEW
-========================================================= */
-
-function drawLandmarks(lm){
-
-  if(!lm)
-    return;
-
-
-  ctx.fillStyle =
-    "#7ee7ff";
-
-
-  for(
-    let i=0;
-    i<lm.length;
-    i+=5
-  ){
-
-    const p =
-      lm[i];
-
-
-    const x =
-      (1-p.x) *
-      canvas.width;
-
-
-    const y =
-      p.y *
-      canvas.height;
-
-
-    ctx.beginPath();
-
-    ctx.arc(
-      x,
-      y,
-      1.5,
-      0,
-      Math.PI*2
+        width,
+        height
     );
 
-    ctx.fill();
+    const image =
+        temp.toDataURL(
+            "image/jpeg",
+            0.72
+        );
 
-  }
+    busy = true;
 
+    const started =
+        performance.now();
+
+    socket.send(JSON.stringify({
+        type:"frame",
+        image:image
+    }));
+
+    latencyText.textContent =
+        Math.round(
+            performance.now()-started
+        );
 }
 
+function drawResult(dataUrl){
 
-/* =========================================================
-   MİMİK METRİKLERİ
-========================================================= */
+    const image =
+        new Image();
 
-function calculateExpressionMetrics(lm){
+    image.onload = ()=>{
 
-  if(!lm || lm.length < 468){
+        canvas.width =
+            image.width;
 
-    return {
-      mouth:0,
-      smile:0,
-      eyeL:0,
-      eyeR:0,
-      brow:0
+        canvas.height =
+            image.height;
+
+        ctx.drawImage(
+            image,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
     };
 
-  }
-
-
-  const faceHeight =
-    distance(
-      lm[10],
-      lm[152]
-    );
-
-
-  const leftEyeWidth =
-    distance(
-      lm[33],
-      lm[133]
-    );
-
-
-  const rightEyeWidth =
-    distance(
-      lm[362],
-      lm[263]
-    );
-
-
-  const leftEyeHeight =
-    distance(
-      lm[159],
-      lm[145]
-    );
-
-
-  const rightEyeHeight =
-    distance(
-      lm[386],
-      lm[374]
-    );
-
-
-  const mouthWidth =
-    distance(
-      lm[61],
-      lm[291]
-    );
-
-
-  const mouthHeight =
-    distance(
-      lm[13],
-      lm[14]
-    );
-
-
-  return {
-
-    mouth:
-      mouthHeight /
-      faceHeight,
-
-    smile:
-      mouthWidth /
-      faceHeight,
-
-    eyeL:
-      leftEyeHeight /
-      leftEyeWidth,
-
-    eyeR:
-      rightEyeHeight /
-      rightEyeWidth,
-
-    brow:
-      (
-        distance(lm[105],lm[1]) +
-        distance(lm[334],lm[1])
-      ) / 2
-
-  };
-
+    image.src = dataUrl;
 }
 
-
-/* =========================================================
-   FACE MESH TRIANGULATION
-========================================================= */
-
-/*
-  Önceki sürümde yüzün yalnızca birkaç
-  üçgeni warp ediliyordu.
-
-  Burada landmark noktalarından otomatik
-  Delaunay triangulation oluşturuyoruz.
-
-  Böylece:
-
-  👁 göz
-  👄 ağız
-  🤨 kaş
-  👃 burun
-  🙂 yanak
-
-  bölgeleri de ayrı ayrı hareket edebilir.
-*/
-
-
-let meshTriangles = null;
-
-
-/* =========================================================
-   NOKTA
-========================================================= */
-
-function pointInTriangle(
-  p,
-  a,
-  b,
-  c
-){
-
-  const area =
-    (
-      a.x*(c.y-b.y) +
-      b.x*(a.y-c.y) +
-      c.x*(b.y-a.y)
-    );
-
-
-  const s =
-    (
-      a.y*c.x -
-      a.x*c.y +
-      (c.y-a.y)*p.x +
-      (a.x-c.x)*p.y
-    ) / area;
-
-
-  const t =
-    (
-      a.x*b.y -
-      a.y*b.x +
-      (a.y-b.y)*p.x +
-      (b.x-a.x)*p.y
-    ) / area;
-
-
-  return (
-    s >= 0 &&
-    t >= 0 &&
-    s+t <= 1
-  );
-
-}
-
-
-/* =========================================================
-   CIRCUMCIRCLE
-========================================================= */
-
-function circumcircle(a,b,c){
-
-  const A =
-    b.x-a.x;
-
-  const B =
-    b.y-a.y;
-
-  const C =
-    c.x-a.x;
-
-  const D =
-    c.y-a.y;
-
-
-  const E =
-    A*(a.x+b.x) +
-    B*(a.y+b.y);
-
-  const F =
-    C*(a.x+c.x) +
-    D*(a.y+c.y);
-
-
-  const G =
-    2*(A*(c.y-b.y)-B*(c.x-b.x));
-
-
-  if(Math.abs(G)<0.000001)
-    return null;
-
-
-  const ox =
-    (D*E-B*F)/G;
-
-
-  const oy =
-    (A*F-C*E)/G;
-
-
-  const r2 =
-    (ox-a.x)**2 +
-    (oy-a.y)**2;
-
-
-  return {
-    x:ox,
-    y:oy,
-    r2
-  };
-
-}
-
-
-/* =========================================================
-   DELAUNAY
-========================================================= */
-
-function createTriangulation(points){
-
-  const pts =
-    points.map(
-      (p,i)=>({
-        x:p.x,
-        y:p.y,
-        i
-      })
-    );
-
-
-  let minX=Infinity;
-  let minY=Infinity;
-  let maxX=-Infinity;
-  let maxY=-Infinity;
-
-
-  for(const p of pts){
-
-    minX =
-      Math.min(minX,p.x);
-
-    minY =
-      Math.min(minY,p.y);
-
-    maxX =
-      Math.max(maxX,p.x);
-
-    maxY =
-      Math.max(maxY,p.y);
-
-  }
-
-
-  const dx =
-    maxX-minX;
-
-  const dy =
-    maxY-minY;
-
-  const delta =
-    Math.max(dx,dy)*20;
-
-
-  const midX =
-    (minX+maxX)/2;
-
-  const midY =
-    (minY+maxY)/2;
-
-
-  const superA = {
-    x:midX-delta,
-    y:midY-delta,
-    i:-1
-  };
-
-  const superB = {
-    x:midX,
-    y:midY+delta,
-    i:-2
-  };
-
-  const superC = {
-    x:midX+delta,
-    y:midY-delta,
-    i:-3
-  };
-
-
-  pts.push(
-    superA,
-    superB,
-    superC
-  );
-
-
-  let triangles = [
-
-    {
-      a:pts.length-3,
-      b:pts.length-2,
-      c:pts.length-1
-    }
-
-  ];
-
-
-  for(
-    let pIndex=0;
-    pIndex<points.length;
-    pIndex++
-  ){
-
-    const p =
-      pts[pIndex];
-
-
-    const bad=[];
-
-
-    for(
-      let i=0;
-      i<triangles.length;
-      i++
-    ){
-
-      const t =
-        triangles[i];
-
-
-      const cc =
-        circumcircle(
-          pts[t.a],
-          pts[t.b],
-          pts[t.c]
-        );
-
-
-      if(!cc)
-        continue;
-
-
-      const d2 =
-        (p.x-cc.x)**2 +
-        (p.y-cc.y)**2;
-
-
-      if(d2 <= cc.r2){
-
-        bad.push(i);
-
-      }
-
-    }
-
-
-    const edges=[];
-
-
-    for(
-      const index
-      of bad
-    ){
-
-      const t =
-        triangles[index];
-
-
-      edges.push(
-        [t.a,t.b],
-        [t.b,t.c],
-        [t.c,t.a]
-      );
-
-    }
-
-
-    triangles =
-      triangles.filter(
-        (_,i)=>!bad.includes(i)
-      );
-
-
-    const uniqueEdges=[];
-
-
-    for(
-      const edge
-      of edges
-    ){
-
-      let found=-1;
-
-
-      for(
-        let i=0;
-        i<uniqueEdges.length;
-        i++
-      ){
-
-        const e =
-          uniqueEdges[i];
-
-
-        if(
-          (
-            e[0]===edge[1] &&
-            e[1]===edge[0]
-          ) ||
-          (
-            e[0]===edge[0] &&
-            e[1]===edge[1]
-          )
-        ){
-
-          found=i;
-          break;
-
-        }
-
-      }
-
-
-      if(found>=0){
-
-        uniqueEdges.splice(
-          found,
-          1
-        );
-
-      }
-      else{
-
-        uniqueEdges.push(
-          edge
-        );
-
-      }
-
-    }
-
-
-    for(
-      const edge
-      of uniqueEdges
-    ){
-
-      triangles.push({
-
-        a:edge[0],
-        b:edge[1],
-        c:pIndex
-
-      });
-
-    }
-
-  }
-
-
-  return triangles
-    .filter(
-      t =>
-        t.a < points.length &&
-        t.b < points.length &&
-        t.c < points.length
-    );
-
-}
-
-
-/* =========================================================
-   TRIANGLE CACHE
-========================================================= */
-
-function ensureTriangulation(){
-
-  if(meshTriangles)
-    return;
-
-
-  if(!sourceLandmarks)
-    return;
-
-
-  meshTriangles =
-    createTriangulation(
-      sourceLandmarks
-    );
-
-
-  console.log(
-    "Face triangles:",
-    meshTriangles.length
-  );
-
-}
-
-
-/* =========================================================
-   FACE MASK
-========================================================= */
-
-function getFaceMask(){
-
-  const mask =
-    document.createElement("canvas");
-
-  mask.width =
-    canvas.width;
-
-  mask.height =
-    canvas.height;
-
-
-  const mctx =
-    mask.getContext("2d");
-
-
-  /*
-    Yüzün yaklaşık sınırı.
-    Çok geniş alanı kapatmasını önlüyoruz.
-  */
-
-  const face =
-    cameraLandmarks;
-
-
-  if(!face)
-    return null;
-
-
-  const points = [
-
-    10,
-    338,
-    297,
-    332,
-    284,
-    251,
-    389,
-    356,
-    454,
-    323,
-    361,
-    288,
-    397,
-    365,
-    379,
-    378,
-    400,
-    377,
-    152,
-    148,
-    176,
-    149,
-    150,
-    136,
-    172,
-    58,
-    132,
-    93,
-    234,
-    127,
-    162,
-    21,
-    54,
-    103,
-    67,
-    109
-  ];
-
-
-  mctx.beginPath();
-
-
-  const first =
-    face[points[0]];
-
-
-  mctx.moveTo(
-    (1-first.x)*canvas.width,
-    first.y*canvas.height
-  );
-
-
-  for(
-    let i=1;
-    i<points.length;
-    i++
-  ){
-
-    const p =
-      face[points[i]];
-
-
-    mctx.lineTo(
-      (1-p.x)*canvas.width,
-      p.y*canvas.height
-    );
-
-  }
-
-
-  mctx.closePath();
-
-  mctx.fillStyle =
-    "white";
-
-  mctx.fill();
-
-
-  return mask;
-
-}
-
-
-/* =========================================================
-   SOURCE → TARGET WARP
-========================================================= */
-
-function warpFace(
-  image,
-  source,
-  target
-){
-
-  ensureTriangulation();
-
-
-  if(!meshTriangles)
-    return;
-
-
-  const sw =
-    image.naturalWidth ||
-    image.width;
-
-  const sh =
-    image.naturalHeight ||
-    image.height;
-
-
-  /*
-    Çok küçük üçgenleri atıyoruz.
-  */
-
-  for(
-    const tri
-    of meshTriangles
-  ){
-
-    const s1 =
-      source[tri.a];
-
-    const s2 =
-      source[tri.b];
-
-    const s3 =
-      source[tri.c];
-
-
-    const t1 =
-      target[tri.a];
-
-    const t2 =
-      target[tri.b];
-
-    const t3 =
-      target[tri.c];
-
-
-    if(
-      !s1 ||
-      !s2 ||
-      !s3 ||
-      !t1 ||
-      !t2 ||
-      !t3
-    )
-      continue;
-
-
-    const sx1 =
-      s1.x*sw;
-
-    const sy1 =
-      s1.y*sh;
-
-    const sx2 =
-      s2.x*sw;
-
-    const sy2 =
-      s2.y*sh;
-
-    const sx3 =
-      s3.x*sw;
-
-    const sy3 =
-      s3.y*sh;
-
-
-    const dx1 =
-      (1-t1.x) *
-      canvas.width;
-
-    const dy1 =
-      t1.y *
-      canvas.height;
-
-    const dx2 =
-      (1-t2.x) *
-      canvas.width;
-
-    const dy2 =
-      t2.y *
-      canvas.height;
-
-    const dx3 =
-      (1-t3.x) *
-      canvas.width;
-
-    const dy3 =
-      t3.y *
-      canvas.height;
-
-
-    drawWarpTriangle(
-
-      image,
-
-      sx1,sy1,
-      sx2,sy2,
-      sx3,sy3,
-
-      dx1,dy1,
-      dx2,dy2,
-      dx3,dy3
-
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   AFFINE WARP
-========================================================= */
-
-function drawWarpTriangle(
-
-  image,
-
-  sx1,sy1,
-  sx2,sy2,
-  sx3,sy3,
-
-  dx1,dy1,
-  dx2,dy2,
-  dx3,dy3
-
-){
-
-  const det =
-
-    sx1*(sy2-sy3) +
-    sx2*(sy3-sy1) +
-    sx3*(sy1-sy2);
-
-
-  if(
-    Math.abs(det)<0.000001
-  )
-    return;
-
-
-  const a =
-
-    (
-      dx1*(sy2-sy3) +
-      dx2*(sy3-sy1) +
-      dx3*(sy1-sy2)
-    ) / det;
-
-
-  const b =
-
-    (
-      dy1*(sy2-sy3) +
-      dy2*(sy3-sy1) +
-      dy3*(sy1-sy2)
-    ) / det;
-
-
-  const c =
-
-    (
-      dx1*(sx3-sx2) +
-      dx2*(sx1-sx3) +
-      dx3*(sx2-sx1)
-    ) / det;
-
-
-  const d =
-
-    (
-      dy1*(sx3-sx2) +
-      dy2*(sx1-sx3) +
-      dy3*(sx2-sx1)
-    ) / det;
-
-
-  const e =
-
-    (
-      dx1*(sx2*sy3-sx3*sy2) +
-      dx2*(sx3*sy1-sx1*sy3) +
-      dx3*(sx1*sy2-sx2*sy1)
-    ) / det;
-
-
-  const f =
-
-    (
-      dy1*(sx2*sy3-sx3*sy2) +
-      dy2*(sx3*sy1-sx1*sy3) +
-      dy3*(sx1*sy2-sx2*sy1)
-    ) / det;
-
-
-  ctx.save();
-
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    dx1,
-    dy1
-  );
-
-  ctx.lineTo(
-    dx2,
-    dy2
-  );
-
-  ctx.lineTo(
-    dx3,
-    dy3
-  );
-
-  ctx.closePath();
-
-  ctx.clip();
-
-
-  ctx.setTransform(
-    a,b,c,d,e,f
-  );
-
-
-  ctx.drawImage(
-    image,
-    0,
-    0
-  );
-
-
-  ctx.restore();
-
-}
-
-
-/* =========================================================
-   EXPRESSION RETARGETING
-========================================================= */
-
-/*
-  Kalibrasyonun asıl amacı burada kullanılıyor.
-
-  Hedefin nötr yüzü:
-      calibrationSamples[0]
-
-  Hedefin şu anki yüzü:
-      target
-
-  Aradaki fark:
-      hedef mimik hareketi
-
-  Bu hareket kaynak yüzün landmarklarına
-  uygulanıyor.
-*/
-
-
-function buildExpressionTarget(target){
-
-  if(
-    !calibrationSamples.length ||
-    !sourceLandmarks
-  ){
-
-    return target;
-
-  }
-
-
-  const neutral =
-    calibrationSamples[0].landmarks;
-
-
-  const result =
-    cloneLandmarks(target);
-
-
-  /*
-    Hedef yüzün anlık landmarkları zaten
-    mimikleri içeriyor.
-
-    Burada hareketi daha kontrollü hale
-    getirmek için yüzün ana bölgelerini
-    ekstra güçlendiriyoruz.
-  */
-
-
-  const metrics =
-    calculateExpressionMetrics(
-      target
-    );
-
-
-  const neutralMetrics =
-    calculateExpressionMetrics(
-      neutral
-    );
-
-
-  /*
-    Mimik şiddetleri
-  */
-
-  const mouthDelta =
-    metrics.mouth -
-    neutralMetrics.mouth;
-
-
-  const smileDelta =
-    metrics.smile -
-    neutralMetrics.smile;
-
-
-  const eyeLDelta =
-    metrics.eyeL -
-    neutralMetrics.eyeL;
-
-
-  const eyeRDelta =
-    metrics.eyeR -
-    neutralMetrics.eyeR;
-
-
-  const browDelta =
-    metrics.brow -
-    neutralMetrics.brow;
-
-
-  /*
-    Ağız bölgesi
-  */
-
-  const mouthPoints = [
-
-    61,146,91,181,84,
-    17,314,405,321,375,
-    291,308,415,310,311,
-    402,317,14,87,178,
-    95,88,185,40,39,
-    37,0,267,269,270
-
-  ];
-
-
-  for(
-    const i
-    of mouthPoints
-  ){
-
-    if(!result[i] || !neutral[i])
-      continue;
-
-
-    /*
-      Ağzı dikey olarak daha belirgin
-      şekilde takip ettir.
-    */
-
-    result[i].y +=
-      mouthDelta *
-      0.55;
-
-
-    /*
-      Gülümseme sırasında ağız kenarlarını
-      yatay olarak aç.
-    */
-
-    if(
-      i===61 ||
-      i===291 ||
-      i===146 ||
-      i===375
-    ){
-
-      const side =
-        i===61 ||
-        i===146
-          ? -1
-          : 1;
-
-
-      result[i].x +=
-        smileDelta *
-        0.7 *
-        side;
-
-    }
-
-  }
-
-
-  /*
-    Gözler
-  */
-
-  const leftEye = [
-    33,7,163,144,145,153,
-    154,155,133,173,157,158,
-    159,160,161,246
-  ];
-
-
-  const rightEye = [
-    362,382,381,380,374,373,
-    390,249,263,466,388,387,
-    386,385,384,398
-  ];
-
-
-  for(
-    const i
-    of leftEye
-  ){
-
-    if(!result[i])
-      continue;
-
-
-    result[i].y +=
-      -eyeLDelta *
-      0.35;
-
-  }
-
-
-  for(
-    const i
-    of rightEye
-  ){
-
-    if(!result[i])
-      continue;
-
-
-    result[i].y +=
-      -eyeRDelta *
-      0.35;
-
-  }
-
-
-  /*
-    Kaşlar
-  */
-
-  const brows = [
-
-    46,53,52,65,55,70,
-    105,107,66,63,
-
-    276,283,282,295,285,
-    336,334,296,293
-
-  ];
-
-
-  for(
-    const i
-    of brows
-  ){
-
-    if(!result[i])
-      continue;
-
-
-    result[i].y +=
-      -browDelta *
-      0.20;
-
-  }
-
-
-  return result;
-
-}
-
-
-/* =========================================================
-   FACE SWAP
-========================================================= */
-
-function renderSwap(
-  targetLandmarks
-){
-
-  if(
-    !sourceLandmarks ||
-    !sourceImageLoaded
-  )
-    return;
-
-
-  /*
-    Önce gerçek kamerayı çiz.
-  */
-
-  ctx.save();
-
-  ctx.translate(
-    canvas.width,
-    0
-  );
-
-  ctx.scale(-1,1);
-
-  ctx.drawImage(
-    video,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  ctx.restore();
-
-
-  /*
-    Hedef yüz landmarklarını
-    mimik retargeting'den geçir.
-  */
-
-  const expressionTarget =
-    buildExpressionTarget(
-      targetLandmarks
-    );
-
-
-  /*
-    Yoğun mesh ile kaynak yüzü
-    hedef yüze aktar.
-  */
-
-  ctx.save();
-
-  ctx.globalAlpha = 0.98;
-
-
-  warpFace(
-    sourceImage,
-    sourceLandmarks,
-    expressionTarget
-  );
-
-
-  ctx.restore();
-
-
-  /*
-    Yüz kenarlarını yumuşatmak için
-    hafif bir overlay kullanıyoruz.
-  */
-
-}
-
-
-/* =========================================================
-   SWAP BUTONU
-========================================================= */
-
-swapBtn.onclick =
-  ()=>{
-
-    if(!sourceLandmarks){
-
-      setStatus(
-        "Önce kaynak yüzünü analiz et.",
-        "warning"
-      );
-
-      return;
-
-    }
-
-
-    if(!cameraOn){
-
-      openCamera();
-
-    }
-
-
-    swapOn =
-      !swapOn;
-
-
-    if(swapOn){
-
-      swapBtn.textContent =
-        "⛔ Face Swap'ı Durdur";
-
-
-      setStatus(
-        "🪄 Canlı Face Swap aktif — mimik aktarımı açık.",
-        "ok"
-      );
-
-    }
-    else{
-
-      swapBtn.textContent =
-        "🪄 Face Swap'ı Başlat";
-
-
-      setStatus(
-        "Face Swap durduruldu."
-      );
-
-    }
-
-  };
-
-
-/* =========================================================
-   BAŞLAT
-========================================================= */
-
-init();
+window.addEventListener(
+    "beforeunload",
+    stopCamera
+);
 
 </script>
 
