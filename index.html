@@ -457,12 +457,8 @@ function createFaceMesh() {
 
   const mesh = new FaceMesh({
 
-    locateFile: file => {
-
-      return
-        `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
-
-    }
+    locateFile: file =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`
 
   });
 
