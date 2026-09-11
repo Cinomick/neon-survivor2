@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Neon Survivor 3D — Standalone</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#02060b;color:#eafaff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;background:#02060b}
+.ui{position:fixed;inset:0;pointer-events:none}
+.top{display:flex;justify-content:space-between;gap:8px;padding:12px;z-index:5}
+.panel{background:#06111dcc;border:1px solid #43d8ff55;border-radius:14px;padding:9px 12px;backdrop-filter:blur(8px);box-shadow:0 0 25px #00bfff10}
+.meter{height:8px;width:140px;background:#13222d;border-radius:10px;overflow:hidden;margin-top:5px}
+.fill{height:100%;width:100%;transition:width .15s}
+.hp{background:#ff4f73}.xp{background:#42dcff}
+#cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:24px;height:24px;z-index:4}
+#cross:before,#cross:after{content:"";position:absolute;background:#d9faff;box-shadow:0 0 8px #48dcff}
+#cross:before{width:2px;height:22px;left:11px;top:1px}
+#cross:after{height:2px;width:22px;left:1px;top:11px}
+#start,#pause,#error{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
+.card{width:min(88vw,620px);padding:28px;border:1px solid #43d8ff88;border-radius:20px;background:#03101aec;box-shadow:0 0 60px #00c8ff12;text-align:center}
+h1{margin:0 0 8px;font-size:clamp(30px,8vw,54px);letter-spacing:-1px}
+.sub{opacity:.72;margin-bottom:22px}
+button{border:0;border-radius:14px;padding:15px 25px;background:#49d9ff;color:#031018;font-size:18px;font-weight:900;box-shadow:0 8px 30px #00bfff25}
+button:active{transform:scale(.97)}
+.hidden{display:none!important}
+#touch{position:fixed;inset:0;z-index:10;pointer-events:none}
+#joy{position:absolute;left:28px;bottom:30px;width:138px;height:138px;border:2px solid #62dcff33;border-radius:50%;background:#06152166;pointer-events:auto}
+#knob{position:absolute;left:39px;top:39px;width:56px;height:56px;border-radius:50%;background:#45d9ff33;border:1px solid #7de8ff66}
+.tbtn{position:absolute;bottom:32px;width:82px;height:82px;border-radius:50%;pointer-events:auto;background:#071824aa;color:#bfefff;border:1px solid #6ddfff44;font-size:14px;font-weight:900}
+#run{right:126px}#fire{right:25px;width:94px;height:94px;background:#062033bb}
+#look{position:absolute;right:0;top:18%;width:55%;height:55%;pointer-events:auto}
+#pauseBtn{position:fixed;right:12px;top:92px;z-index:8;width:48px;height:48px;border-radius:50%;padding:0;background:#061521cc;color:#dffbff;border:1px solid #6ddfff44;font-size:20px}
+#toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:9;padding:10px 16px;border-radius:12px;background:#061521dd;border:1px solid #5de0ff55;opacity:0;transition:opacity .2s;pointer-events:none}
+.small{font-size:13px;opacity:.7;line-height:1.45}
+@media (pointer:fine){#touch{display:none}}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<div id="start">
+  <div class="card">
+    <h1>NEON SURVIVOR</h1>
+    <div class="sub">3D Arena • Standalone sürüm</div>
+    <div class="small" style="margin-bottom:20px">Bu sürümde harici Three.js/CDN kullanılmıyor.</div>
+    <button id="startBtn">OYUNA BAŞLA</button>
+  </div>
+</div>
+
+<div id="error" class="hidden">
+  <div class="card">
+    <h1>Başlatılamadı</h1>
+    <div id="errorText" class="sub"></div>
+    <button onclick="location.reload()">TEKRAR DENE</button>
+  </div>
+</div>
+
+<div id="pause" class="hidden">
+  <div class="card">
+    <h1>DURAKLATILDI</h1>
+    <div class="sub">Devam etmek için aşağıdaki düğmeye bas.</div>
+    <button id="resumeBtn">DEVAM ET</button>
+  </div>
+</div>
+
+<div class="ui">
+  <div class="top">
+    <div class="panel">
+      <b>NEON SURVIVOR</b><br>
+      CAN <span id="hpTxt">100</span> • LV <span id="lvTxt">1</span> • SKOR <span id="scoreTxt">0</span>
+      <div class="meter"><div id="hpBar" class="fill hp"></div></div>
+      <div class="meter"><div id="xpBar" class="fill xp"></div></div>
+    </div>
+    <div class="panel">Dalga <b id="waveTxt">1</b> • <span id="enemyTxt">0</span>/15</div>
+  </div>
+</div>
+
+<div id="cross"></div>
+<button id="pauseBtn" class="hidden">Ⅱ</button>
+<div id="toast"></div>
+
+<div id="touch">
+  <div id="joy"><div id="knob"></div></div>
+  <div id="look"></div>
+  <button id="run" class="tbtn">KOŞ</button>
+  <button id="fire" class="tbtn">ATEŞ</button>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl', {antialias:true, alpha:false, powerPreference:'high-performance'});
+
+function fail(msg){
+  document.getElementById('start').classList.add('hidden');
+  document.getElementById('error').classList.remove('hidden');
+  document.getElementById('errorText').textContent = msg;
+}
+if(!gl){ fail('Bu Safari/WebView ortamında WebGL açılamadı. Safari ayarlarında JavaScript ve WebGL etkin olmalı.'); return; }
+
+const VERT = `
+attribute vec3 aPos;
+uniform mat4 uMVP;
+void main(){ gl_Position = uMVP * vec4(aPos,1.0); }
+`;
+const FRAG = `
+precision mediump float;
+uniform vec4 uColor;
+void main(){ gl_FragColor=uColor; }
+`;
+
+function shader(type,src){
+  const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)||'Shader error');
+  return s;
+}
+function program(){
+  const p=gl.createProgram();
+  gl.attachShader(p,shader(gl.VERTEX_SHADER,VERT));
+  gl.attachShader(p,shader(gl.FRAGMENT_SHADER,FRAG));
+  gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)||'Program error');
+  return p;
+}
+
+let prog;
+try{ prog=program(); }catch(e){ fail('3D motoru başlatılamadı: '+e.message); return; }
+
+const aPos=gl.getAttribLocation(prog,'aPos');
+const uMVP=gl.getUniformLocation(prog,'uMVP');
+const uColor=gl.getUniformLocation(prog,'uColor');
+const buf=gl.createBuffer();
+
+const cube = new Float32Array([
+-.5,-.5,-.5, .5,-.5,-.5, .5,.5,-.5, -.5,.5,-.5,
+-.5,-.5,.5, .5,-.5,.5, .5,.5,.5, -.5,.5,.5
+]);
+const inds = new Uint16Array([
+0,1,2, 0,2,3, 4,6,5, 4,7,6,
+0,4,5, 0,5,1, 3,2,6, 3,6,7,
+1,5,6, 1,6,2, 0,3,7, 0,7,4
+]);
+gl.bindBuffer(gl.ARRAY_BUFFER,buf); gl.bufferData(gl.ARRAY_BUFFER,cube,gl.STATIC_DRAW);
+const ib=gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,inds,gl.STATIC_DRAW);
+gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,0,0);
+gl.enable(gl.DEPTH_TEST);
+gl.enable(gl.CULL_FACE);
+
+function I(){return [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}
+function mul(a,b){
+ const r=new Array(16);
+ for(let c=0;c<4;c++)for(let r0=0;r0<4;r0++)
+  r[c*4+r0]=a[r0]*b[c*4]+a[4+r0]*b[c*4+1]+a[8+r0]*b[c*4+2]+a[12+r0]*b[c*4+3];
+ return r;
+}
+function trans(x,y,z){let m=I();m[12]=x;m[13]=y;m[14]=z;return m}
+function scale(x,y,z){let m=I();m[0]=x;m[5]=y;m[10]=z;return m}
+function rotY(a){let c=Math.cos(a),s=Math.sin(a),m=I();m[0]=c;m[2]=-s;m[8]=s;m[10]=c;return m}
+function perspective(fov,asp,n,f){
+ const t=1/Math.tan(fov/2), q=1/(n-f);
+ return [t/asp,0,0,0,0,t,0,0,0,0,(f+n)*q,-1,0,0,2*f*n*q,0];
+}
+function cameraMatrix(){
+ let yaw=player.yaw, pitch=player.pitch;
+ const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+ // camera rotation = inverse of yaw/pitch
+ const ry=[cy,0,-sy,0,0,1,0,0,sy,0,cy,0,0,0,0,1];
+ const rx=[1,0,0,0,0,cp,sp,0,0,-sp,cp,0,0,0,0,1];
+ let view=mul(rx,ry);
+ view[12]=-(view[0]*player.x+view[4]*player.y+view[8]*player.z);
+ view[13]=-(view[1]*player.x+view[5]*player.y+view[9]*player.z);
+ view[14]=-(view[2]*player.x+view[6]*player.y+view[10]*player.z);
+ return mul(perspective(Math.PI/3,canvas.width/canvas.height,.05,120),view);
+}
+function drawBox(x,y,z,sx,sy,sz,color,rot=0){
+ let m=mul(trans(x,y,z),mul(rotY(rot),scale(sx,sy,sz)));
+ gl.uniformMatrix4fv(uMVP,false,new Float32Array(mul(cameraMatrix(),m)));
+ gl.uniform4fv(uColor,new Float32Array(color));
+ gl.drawElements(gl.TRIANGLES,36,gl.UNSIGNED_SHORT,0);
+}
+function color(hex,a=1){
+ const n=parseInt(hex.slice(1),16);
+ return [((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255,a];
+}
+
+const player={x:0,y:1.1,z:7,yaw:0,pitch:0,hp:100,lv:1,xp:0,score:0};
+let running=false,paused=false,last=0,spawnT=0,shootT=0,wave=1,bossTimer=25;
+const enemies=[];
+const keys={};
+let mobileRun=false,mobileFire=false;
+const joy={x:0,y:0,active:false,id:null};
+let lookActive=false,lastLX=0,lastLY=0;
+
+function resize(){
+ const d=Math.min(devicePixelRatio||1,1.75);
+ canvas.width=Math.floor(innerWidth*d);canvas.height=Math.floor(innerHeight*d);
+ gl.viewport(0,0,canvas.width,canvas.height);
+}
+addEventListener('resize',resize);resize();
+
+function spawnEnemy(boss=false){
+ if(enemies.length>=15)return;
+ const ang=Math.random()*Math.PI*2, rad=10+Math.random()*7;
+ const types=boss?['VOID REAPER','NEON TITAN','PLASMA WARDEN']:['NEON DRONE','NEON STALKER','VOID CRAWLER'];
+ const name=types[Math.floor(Math.random()*types.length)];
+ enemies.push({
+   x:Math.cos(ang)*rad,z:Math.sin(ang)*rad,y:.85,
+   hp:boss?180:35, max:boss?180:35, boss,name,
+   power:boss?(name==='VOID REAPER'?'VOID DASH':name==='NEON TITAN'?'SHOCKWAVE':'PLASMA BURST'):'',
+   speed:boss?1.0:1.25+Math.random()*.65,hit:0,phase:Math.random()*6.28,dead:0
+ });
+}
+
+function damageEnemy(e,d){
+ e.hp-=d;
+ if(e.hp<=0 && !e.dead){e.dead=1; player.score+=e.boss?1000:100; player.xp+=e.boss?60:10; toast(e.boss?e.name+' yok edildi!':'Düşman yok edildi');}
+}
+function shoot(){
+ if(!running||paused)return;
+ let best=null,bd=999;
+ const fx=-Math.sin(player.yaw),fz=-Math.cos(player.yaw);
+ for(const e of enemies){
+   if(e.dead)continue;
+   const dx=e.x-player.x,dz=e.z-player.z;
+   const d=Math.hypot(dx,dz);
+   const dot=(dx*fx+dz*fz)/Math.max(d,.001);
+   if(dot>.93 && d<28 && d<bd){best=e;bd=d;}
+ }
+ if(best) damageEnemy(best,best.boss?24:45);
+}
+function update(dt){
+ let mx=0,mz=0;
+ if(keys.KeyW) mz-=1;if(keys.KeyS)mz+=1;if(keys.KeyA)mx-=1;if(keys.KeyD)mx+=1;
+ if(joy.active){mx+=joy.x;mz+=joy.y}
+ const len=Math.hypot(mx,mz)||1, speed=(keys.ShiftLeft||mobileRun)?7:4;
+ mx/=len;mz/=len;
+ // movement relative to camera yaw
+ const cy=Math.cos(player.yaw),sy=Math.sin(player.yaw);
+ player.x += (mx*cy + mz*sy)*speed*dt;
+ player.z += (-mx*sy + mz*cy)*speed*dt;
+ player.x=Math.max(-13,Math.min(13,player.x));player.z=Math.max(-13,Math.min(13,player.z));
+
+ if(keys.Space || mobileFire){shoot(); keys.Space=false;mobileFire=false}
+ shootT-=dt;
+ if((keys.Mouse0)&&shootT<=0){shoot();shootT=.14}
+
+ spawnT-=dt;
+ if(spawnT<=0){spawnEnemy(false);spawnT=Math.max(.45,1.5-wave*.04)}
+ bossTimer-=dt;
+ if(bossTimer<=0 && !enemies.some(e=>e.boss&&!e.dead)){spawnEnemy(true);bossTimer=38;wave++}
+
+ for(let i=enemies.length-1;i>=0;i--){
+   const e=enemies[i];
+   if(e.dead){e.dead+=dt*2.5;e.y-=dt*1.3;if(e.dead>=1){enemies.splice(i,1)}continue}
+   const dx=player.x-e.x,dz=player.z-e.z,d=Math.hypot(dx,dz)||.001;
+   e.x+=(dx/d)*e.speed*dt;e.z+=(dz/d)*e.speed*dt;
+   e.phase+=dt*3;
+   if(d<1.6){e.hit-=dt;if(e.hit<=0){player.hp-=e.boss?12:7;e.hit=.8}}
+ }
+ if(player.hp<=0){player.hp=100;player.x=0;player.z=7;player.score=Math.max(0,player.score-500);toast('Yeniden doğdun')}
+ if(player.xp>=player.lv*100){player.xp-=player.lv*100;player.lv++;player.hp=Math.min(100,player.hp+25);toast('SEVİYE '+player.lv)}
+}
+
+function render(){
+ gl.clearColor(.005,.012,.022,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+ // floor
+ for(let x=-14;x<=14;x+=2) for(let z=-14;z<=14;z+=2)
+   drawBox(x,-.35,z,1.9,.15,1.9,(Math.abs(x+z)%4===0)?color('#0b2634'):color('#071a25'));
+ // arena walls
+ drawBox(0,1,-15,30,2,.3,color('#0a5068'));
+ drawBox(0,1,15,30,2,.3,color('#0a5068'));
+ drawBox(-15,1,0,.3,2,30,color('#0a5068'));
+ drawBox(15,1,0,.3,2,30,color('#0a5068'));
+ // player marker
+ drawBox(player.x,.25,player.z,.65,.5,.65,color('#39dcff'),player.yaw);
+ // enemies
+ for(const e of enemies){
+   const bob=Math.sin(e.phase)*.08;
+   const c=e.dead?color('#6b7b83',Math.max(0,1-e.dead)):e.boss?color(e.name==='VOID REAPER'?'#b95cff':e.name==='NEON TITAN'?'#ff5e9b':'#5cffde'):color('#ff3f68');
+   const s=e.boss?1.6:1;
+   drawBox(e.x,.9+bob,e.z,s,s*1.5,s,c,e.phase*.25);
+   if(e.boss) drawBox(e.x,.9+bob,e.z,s*1.25,.08,.08,color('#ffffff'));
+ }
+}
+
+function loop(t){
+ if(!running)return;
+ const dt=Math.min(.033,(t-last)/1000||.016);last=t;
+ if(!paused){update(dt);render();ui()}
+ requestAnimationFrame(loop);
+}
+function ui(){
+ hpTxt.textContent=Math.max(0,Math.round(player.hp));
+ lvTxt.textContent=player.lv;scoreTxt.textContent=player.score;
+ waveTxt.textContent=wave;enemyTxt.textContent=enemies.filter(e=>!e.dead).length;
+ hpBar.style.width=Math.max(0,player.hp)+'%';
+ xpBar.style.width=Math.min(100,player.xp/(player.lv*100)*100)+'%';
+}
+function toast(s){const t=document.getElementById('toast');t.textContent=s;t.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.opacity=0,1100)}
+
+function startGame(){
+ try{
+   if(running)return;
+   running=true;paused=false;
+   document.getElementById('start').classList.add('hidden');
+   document.getElementById('error').classList.add('hidden');
+   document.getElementById('pauseBtn').classList.remove('hidden');
+   last=performance.now();ui();requestAnimationFrame(loop);
+ }catch(e){running=false;fail('Oyun başlatılırken hata: '+e.message)}
+}
+document.getElementById('startBtn').addEventListener('click',startGame,{passive:true});
+document.getElementById('startBtn').addEventListener('touchend',e=>{e.preventDefault();startGame()},{passive:false});
+
+function togglePause(){
+ if(!running)return;
+ paused=!paused;
+ document.getElementById('pause').classList.toggle('hidden',!paused);
+ if(!paused){last=performance.now();requestAnimationFrame(loop)}
+}
+document.getElementById('resumeBtn').onclick=togglePause;
+document.getElementById('pauseBtn').onclick=togglePause;
+
+addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyP')togglePause()});
+addEventListener('keyup',e=>{keys[e.code]=false});
+addEventListener('mousedown',e=>{if(e.button===0)keys.Mouse0=true});
+addEventListener('mouseup',e=>{if(e.button===0)keys.Mouse0=false});
+addEventListener('mousemove',e=>{
+ if(running && !paused && matchMedia('(pointer:fine)').matches && document.pointerLockElement===canvas){
+   player.yaw-=e.movementX*.0025;player.pitch-=e.movementY*.0025;
+   player.pitch=Math.max(-1.15,Math.min(.65,player.pitch));
+ }
+});
+canvas.addEventListener('click',()=>{if(running&&matchMedia('(pointer:fine)').matches)canvas.requestPointerLock?.()});
+
+const joyEl=document.getElementById('joy'),knob=document.getElementById('knob');
+joyEl.addEventListener('pointerdown',e=>{joy.active=true;joy.id=e.pointerId;joyEl.setPointerCapture(e.pointerId);moveJoy(e)});
+joyEl.addEventListener('pointermove',e=>{if(joy.active&&e.pointerId===joy.id)moveJoy(e)});
+joyEl.addEventListener('pointerup',()=>{joy.active=false;joy.x=joy.y=0;knob.style.transform='translate(0,0)'});
+joyEl.addEventListener('pointercancel',()=>{joy.active=false;joy.x=joy.y=0;knob.style.transform='translate(0,0)'});
+function moveJoy(e){
+ const r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+ let x=e.clientX-cx,y=e.clientY-cy,max=42,d=Math.hypot(x,y)||1;
+ if(d>max){x=x/d*max;y=y/d*max}
+ joy.x=x/max;joy.y=y/max;knob.style.transform=`translate(${x}px,${y}px)`;
+}
+document.getElementById('run').addEventListener('pointerdown',()=>mobileRun=true);
+['pointerup','pointercancel'].forEach(ev=>document.getElementById('run').addEventListener(ev,()=>mobileRun=false));
+document.getElementById('fire').addEventListener('pointerdown',()=>{mobileFire=true;shoot()});
+const look=document.getElementById('look');
+look.addEventListener('pointerdown',e=>{lookActive=true;lastLX=e.clientX;lastLY=e.clientY;look.setPointerCapture(e.pointerId)});
+look.addEventListener('pointermove',e=>{
+ if(!lookActive)return;
+ player.yaw-=(e.clientX-lastLX)*.008;player.pitch-=(e.clientY-lastLY)*.006;
+ player.pitch=Math.max(-1.15,Math.min(.65,player.pitch));
+ lastLX=e.clientX;lastLY=e.clientY;
+});
+['pointerup','pointercancel'].forEach(ev=>look.addEventListener(ev,()=>lookActive=false));
+
+window.addEventListener('error',e=>{
+ if(!running && !document.getElementById('start').classList.contains('hidden')) fail(e.message||'Bilinmeyen JavaScript hatası');
+});
+})();
+</script>
+</body>
+</html>
