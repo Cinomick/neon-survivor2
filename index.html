@@ -23,16 +23,6 @@
 ===================================================== -->
 
 <script
-  src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
-  crossorigin="anonymous">
-</script>
-
-<script
-  src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
-  crossorigin="anonymous">
-</script>
-
-<script
   src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js"
   crossorigin="anonymous">
 </script>
@@ -52,8 +42,7 @@ body {
 
   padding: 18px;
 
-  background:
-    #080b14;
+  background: #080b14;
 
   color: white;
 
@@ -101,7 +90,7 @@ h1 {
 
 
 /* =====================================================
-   KAMERA
+   KAMERA ALANI
 ===================================================== */
 
 .camera {
@@ -130,6 +119,7 @@ h1 {
 }
 
 video,
+#uploadedImage,
 canvas {
 
   position:
@@ -144,15 +134,28 @@ canvas {
   height:
     100%;
 
-  object-fit:
-    cover;
-
 }
 
 video {
 
+  object-fit:
+    cover;
+
   transform:
     scaleX(-1);
+
+}
+
+#uploadedImage {
+
+  display:
+    none;
+
+  object-fit:
+    contain;
+
+  background:
+    #02040a;
 
 }
 
@@ -263,6 +266,13 @@ button.secondary {
 
 }
 
+button.photo {
+
+  background:
+    #7c4dff;
+
+}
+
 button:disabled {
 
   opacity:
@@ -272,7 +282,7 @@ button:disabled {
 
 
 /* =====================================================
-   İSTATİSTİK
+   İSTATİSTİKLER
 ===================================================== */
 
 .stats {
@@ -321,6 +331,72 @@ button:disabled {
 
   color:
     #9faac3;
+
+}
+
+
+/* =====================================================
+   FOTOĞRAF SEÇİMİ
+===================================================== */
+
+.photoInputWrapper {
+
+  position:
+    relative;
+
+  margin-top:
+    10px;
+
+}
+
+.photoInputWrapper input {
+
+  display:
+    none;
+
+}
+
+.photoLabel {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  width:
+    100%;
+
+  padding:
+    15px;
+
+  border-radius:
+    12px;
+
+  background:
+    #7c4dff;
+
+  color:
+    white;
+
+  font-size:
+    16px;
+
+  font-weight:
+    bold;
+
+  cursor:
+    pointer;
+
+}
+
+.photoLabel:active {
+
+  transform:
+    scale(.98);
 
 }
 
@@ -384,12 +460,91 @@ pre {
 }
 
 
+/* =====================================================
+   YÜZ BİLGİSİ
+===================================================== */
+
+.faceInfo {
+
+  display:
+    none;
+
+  margin-top:
+    14px;
+
+  padding:
+    16px;
+
+  background:
+    #10182b;
+
+  border-radius:
+    14px;
+
+  text-align:
+    left;
+
+}
+
+.faceInfo.visible {
+
+  display:
+    block;
+
+}
+
+.faceInfo h2 {
+
+  margin:
+    0 0 10px;
+
+  font-size:
+    18px;
+
+}
+
+.faceItem {
+
+  padding:
+    10px 0;
+
+  border-bottom:
+    1px solid #26314a;
+
+}
+
+.faceItem:last-child {
+
+  border-bottom:
+    none;
+
+}
+
+
+/* =====================================================
+   MOBİL
+===================================================== */
+
 @media (max-width: 600px) {
+
+  body {
+
+    padding:
+      14px;
+
+  }
 
   h1 {
 
     font-size:
       27px;
+
+  }
+
+  .buttons {
+
+    flex-direction:
+      column;
 
   }
 
@@ -416,7 +571,12 @@ pre {
 </div>
 
 
+<!-- =====================================================
+     GÖRÜNTÜ
+===================================================== -->
+
 <div class="camera">
+
 
   <video
     id="video"
@@ -425,23 +585,40 @@ pre {
     playsinline>
   </video>
 
+
+  <img
+    id="uploadedImage"
+    alt="Yüklenen fotoğraf"
+  >
+
+
   <canvas
     id="canvas">
   </canvas>
 
+
 </div>
 
+
+<!-- =====================================================
+     DURUM
+===================================================== -->
 
 <div
   id="status"
   class="status">
 
-  ⏳ MediaPipe hazırlanıyor...
+  ⏳ AI sistemi hazırlanıyor...
 
 </div>
 
 
+<!-- =====================================================
+     KAMERA BUTONLARI
+===================================================== -->
+
 <div class="buttons">
+
 
   <button
     id="startBtn"
@@ -461,8 +638,48 @@ pre {
 
   </button>
 
+
 </div>
 
+
+<!-- =====================================================
+     FOTOĞRAF
+===================================================== -->
+
+<div class="photoInputWrapper">
+
+  <label
+    for="photoInput"
+    class="photoLabel">
+
+    🖼️ Fotoğraf Seç ve Analiz Et
+
+  </label>
+
+
+  <input
+    id="photoInput"
+    type="file"
+    accept="image/*"
+  >
+
+</div>
+
+
+<button
+  id="cameraModeBtn"
+  class="secondary"
+  style="width:100%; margin-top:10px;"
+  disabled>
+
+  📷 Kameraya Dön
+
+</button>
+
+
+<!-- =====================================================
+     İSTATİSTİKLER
+===================================================== -->
 
 <div class="stats">
 
@@ -522,6 +739,27 @@ pre {
 </div>
 
 
+<!-- =====================================================
+     YÜZLER
+===================================================== -->
+
+<div
+  id="faceInfo"
+  class="faceInfo">
+
+  <h2>
+    👤 Algılanan Yüzler
+  </h2>
+
+  <div id="faceList"></div>
+
+</div>
+
+
+<!-- =====================================================
+     SİSTEM
+===================================================== -->
+
 <div class="diagnostics">
 
   <h2>
@@ -546,59 +784,117 @@ Başlatılıyor...
 ===================================================== */
 
 const video =
-  document.getElementById("video");
+  document.getElementById(
+    "video"
+  );
 
 const canvas =
-  document.getElementById("canvas");
+  document.getElementById(
+    "canvas"
+  );
 
 const ctx =
-  canvas.getContext("2d");
+  canvas.getContext(
+    "2d"
+  );
+
+const uploadedImage =
+  document.getElementById(
+    "uploadedImage"
+  );
 
 const status =
-  document.getElementById("status");
+  document.getElementById(
+    "status"
+  );
 
 const startBtn =
-  document.getElementById("startBtn");
+  document.getElementById(
+    "startBtn"
+  );
 
 const stopBtn =
-  document.getElementById("stopBtn");
+  document.getElementById(
+    "stopBtn"
+  );
+
+const cameraModeBtn =
+  document.getElementById(
+    "cameraModeBtn"
+  );
+
+const photoInput =
+  document.getElementById(
+    "photoInput"
+  );
 
 const faceCount =
-  document.getElementById("faceCount");
+  document.getElementById(
+    "faceCount"
+  );
 
 const fpsElement =
-  document.getElementById("fps");
+  document.getElementById(
+    "fps"
+  );
 
 const confidenceElement =
-  document.getElementById("confidence");
+  document.getElementById(
+    "confidence"
+  );
 
 const positionElement =
-  document.getElementById("position");
+  document.getElementById(
+    "position"
+  );
 
 const diagnostics =
-  document.getElementById("diagnostics");
+  document.getElementById(
+    "diagnostics"
+  );
+
+const faceInfo =
+  document.getElementById(
+    "faceInfo"
+  );
+
+const faceList =
+  document.getElementById(
+    "faceList"
+  );
 
 
 /* =====================================================
    DEĞİŞKENLER
 ===================================================== */
 
-let faceDetection = null;
+let faceDetection =
+  null;
 
-let camera = null;
+let stream =
+  null;
 
-let stream = null;
+let running =
+  false;
 
-let running = false;
+let photoMode =
+  false;
 
-let frames = 0;
+let photoURL =
+  null;
+
+let animationFrame =
+  null;
+
+let frameCount =
+  0;
 
 let lastFpsTime =
   performance.now();
 
 
 /* =====================================================
-   SİSTEM DURUMU
+   DURUM SİSTEMİ
 ===================================================== */
 
 const states = {};
@@ -612,8 +908,11 @@ function setState(
 
   states[name] = {
 
-    success,
-    message
+    success:
+      success,
+
+    message:
+      message
 
   };
 
@@ -630,13 +929,22 @@ function renderStates() {
         ([name, item]) => {
 
           return (
-            (item.success
-              ? "✅ "
-              : "❌ ") +
 
-            name +
+            (
+              item.success
+                ? "✅ "
+                : "❌ "
+            )
 
-            " — " +
+            +
+
+            name
+
+            +
+
+            " — "
+
+            +
 
             item.message
 
@@ -650,30 +958,57 @@ function renderStates() {
 
 
 /* =====================================================
-   MEDIAPIPE KONTROL
+   HATA
 ===================================================== */
 
-async function initializeAI() {
+function showError(
+  message
+) {
+
+  status.textContent =
+    "❌ HATA\n\n" +
+    message;
+
+  status.className =
+    "status error";
+
+}
+
+
+/* =====================================================
+   MEDIAPIPE BAŞLAT
+===================================================== */
+
+function initializeAI() {
 
   try {
 
 
+    /*
+    HTTPS
+    */
+
+    const httpsOK =
+      location.protocol ===
+      "https:" ||
+      location.hostname ===
+      "localhost";
+
+
     setState(
       "HTTPS",
-      location.protocol === "https:",
-      location.protocol === "https:"
+      httpsOK,
+      httpsOK
         ? "Güvenli bağlantı"
         : "HTTPS gerekli"
     );
 
 
     /*
-    -----------------------------------------------------
-    CAMERA API
-    -----------------------------------------------------
+    Kamera API
     */
 
-    const cameraSupported =
+    const cameraAPI =
       !!(
         navigator.mediaDevices &&
         navigator.mediaDevices.getUserMedia
@@ -682,17 +1017,15 @@ async function initializeAI() {
 
     setState(
       "Kamera API",
-      cameraSupported,
-      cameraSupported
+      cameraAPI,
+      cameraAPI
         ? "Tarayıcı destekliyor"
-        : "getUserMedia bulunamadı"
+        : "Kamera API bulunamadı"
     );
 
 
     /*
-    -----------------------------------------------------
-    MEDIAPIPE
-    -----------------------------------------------------
+    MediaPipe
     */
 
     if (
@@ -706,31 +1039,6 @@ async function initializeAI() {
 
     }
 
-
-    if (
-      typeof Camera ===
-      "undefined"
-    ) {
-
-      throw new Error(
-        "MediaPipe Camera yardımcı aracı yüklenemedi."
-      );
-
-    }
-
-
-    setState(
-      "MediaPipe",
-      true,
-      "Kütüphane yüklendi"
-    );
-
-
-    /*
-    -----------------------------------------------------
-    FACE DETECTION
-    -----------------------------------------------------
-    */
 
     faceDetection =
       new FaceDetection({
@@ -749,6 +1057,10 @@ async function initializeAI() {
       });
 
 
+    /*
+    Ayarlar
+    */
+
     faceDetection.setOptions({
 
       model:
@@ -763,8 +1075,19 @@ async function initializeAI() {
     });
 
 
+    /*
+    Sonuç callback
+    */
+
     faceDetection.onResults(
       onResults
+    );
+
+
+    setState(
+      "MediaPipe",
+      true,
+      "Face Detection yüklendi"
     );
 
 
@@ -778,13 +1101,14 @@ async function initializeAI() {
     setState(
       "AI sistemi",
       true,
-      "Kamera için hazır"
+      "Çalışmaya hazır"
     );
 
 
     status.textContent =
       "✅ AI sistemi hazır!\n\n" +
-      "Kamerayı başlatabilirsin.";
+      "Kamerayı başlatabilir veya " +
+      "bir fotoğraf seçebilirsin.";
 
     status.className =
       "status success";
@@ -811,287 +1135,13 @@ async function initializeAI() {
     );
 
 
-    status.textContent =
-      "❌ AI sistemi başlatılamadı.\n\n" +
-      "Hata:\n" +
+    showError(
+      "MediaPipe başlatılamadı.\n\n" +
       (
         error.message ||
         String(error)
-      );
-
-    status.className =
-      "status error";
-
-  }
-
-}
-
-
-/* =====================================================
-   SONUÇLAR
-===================================================== */
-
-function onResults(
-  results
-) {
-
-  if (!running) {
-    return;
-  }
-
-
-  canvas.width =
-    video.videoWidth;
-
-  canvas.height =
-    video.videoHeight;
-
-
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  const detections =
-    results.detections ||
-    [];
-
-
-  /*
-  -----------------------------------------------------
-  YÜZ SAYISI
-  -----------------------------------------------------
-  */
-
-  faceCount.textContent =
-    detections.length;
-
-
-  let highestConfidence =
-    0;
-
-
-  /*
-  -----------------------------------------------------
-  YÜZLER
-  -----------------------------------------------------
-  */
-
-  for (
-    const detection
-    of detections
-  ) {
-
-
-    const box =
-      detection.boundingBox;
-
-
-    if (!box) {
-      continue;
-    }
-
-
-    /*
-    ---------------------------------------------------
-    GÜVEN
-    ---------------------------------------------------
-    */
-
-    if (
-      detection.score &&
-      detection.score.length
-    ) {
-
-      highestConfidence =
-        Math.max(
-          highestConfidence,
-          detection.score[0]
-        );
-
-    }
-
-
-    /*
-    ---------------------------------------------------
-    KUTU
-    ---------------------------------------------------
-    */
-
-    const x =
-      box.xCenter -
-      box.width / 2;
-
-    const y =
-      box.yCenter -
-      box.height / 2;
-
-
-    const width =
-      box.width;
-
-    const height =
-      box.height;
-
-
-    ctx.strokeStyle =
-      "#00ff88";
-
-    ctx.lineWidth =
-      4;
-
-
-    ctx.strokeRect(
-      x,
-      y,
-      width,
-      height
-    );
-
-
-    /*
-    ---------------------------------------------------
-    MERKEZ
-    ---------------------------------------------------
-    */
-
-    const centerX =
-      Math.round(
-        box.xCenter
-      );
-
-    const centerY =
-      Math.round(
-        box.yCenter
-      );
-
-
-    positionElement.textContent =
-      centerX +
-      ", " +
-      centerY;
-
-
-    /*
-    ---------------------------------------------------
-    ETİKET
-    ---------------------------------------------------
-    */
-
-    ctx.fillStyle =
-      "#00ff88";
-
-    ctx.font =
-      "bold 18px Arial";
-
-
-    ctx.fillText(
-      "YÜZ",
-      x,
-      Math.max(
-        24,
-        y - 8
       )
     );
-
-
-    /*
-    ---------------------------------------------------
-    LANDMARK NOKTALARI
-    ---------------------------------------------------
-    */
-
-    if (
-      detection.landmarks
-    ) {
-
-      for (
-        const point
-        of detection.landmarks
-      ) {
-
-        const px =
-          point.x *
-          canvas.width;
-
-        const py =
-          point.y *
-          canvas.height;
-
-
-        ctx.beginPath();
-
-        ctx.arc(
-          px,
-          py,
-          4,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fillStyle =
-          "#00eaff";
-
-        ctx.fill();
-
-      }
-
-    }
-
-  }
-
-
-  /*
-  -----------------------------------------------------
-  GÜVEN
-  -----------------------------------------------------
-  */
-
-  confidenceElement.textContent =
-    detections.length
-      ? Math.round(
-          highestConfidence * 100
-        ) + "%"
-      : "0%";
-
-
-  /*
-  -----------------------------------------------------
-  FPS
-  -----------------------------------------------------
-  */
-
-  frames++;
-
-
-  const now =
-    performance.now();
-
-
-  const elapsed =
-    now -
-    lastFpsTime;
-
-
-  if (
-    elapsed >= 1000
-  ) {
-
-    fpsElement.textContent =
-      Math.round(
-        frames /
-        (elapsed / 1000)
-      );
-
-
-    frames =
-      0;
-
-    lastFpsTime =
-      now;
 
   }
 
@@ -1107,56 +1157,69 @@ async function startCamera() {
   try {
 
 
-    if (
-      !navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia
-    ) {
+    /*
+    Fotoğraf modundan çık
+    */
 
-      throw new Error(
-        "Kamera API desteklenmiyor."
-      );
+    photoMode =
+      false;
+
+    uploadedImage.style.display =
+      "none";
+
+    video.style.display =
+      "block";
+
+
+    /*
+    Eski kamera varsa kapat
+    */
+
+    if (stream) {
+
+      stream
+        .getTracks()
+        .forEach(
+          track =>
+            track.stop()
+        );
 
     }
 
 
-    status.textContent =
-      "📷 Kamera izni bekleniyor...";
-
-
     /*
-    ---------------------------------------------------
-    KAMERAYI DOĞRUDAN AÇ
-    ---------------------------------------------------
+    Kamera
     */
 
     stream =
-      await navigator.mediaDevices.getUserMedia({
+      await navigator.mediaDevices
+        .getUserMedia({
 
-        video: {
+          video: {
 
-          facingMode:
-            "user",
+            facingMode:
+              "user",
 
-          width: {
+            width: {
 
-            ideal:
-              1280
+              ideal:
+                1280
+
+            },
+
+            height: {
+
+              ideal:
+                720
+
+            }
 
           },
 
-          height: {
+          audio:
+            false
 
-            ideal:
-              720
-
-          }
-
-        },
-
-        audio:
-          false
-
-      });
+        });
 
 
     video.srcObject =
@@ -1176,6 +1239,9 @@ async function startCamera() {
     stopBtn.disabled =
       false;
 
+    cameraModeBtn.disabled =
+      true;
+
 
     setState(
       "Kamera",
@@ -1188,45 +1254,18 @@ async function startCamera() {
       "🟢 Kamera açık\n\n" +
       "AI yüz arıyor...";
 
-
-    /*
-    ---------------------------------------------------
-    MEDIAPIPE KAMERA DÖNGÜSÜ
-    ---------------------------------------------------
-    */
-
-    camera =
-      new Camera(
-        video,
-        {
-
-          onFrame:
-            async function() {
-
-              if (
-                running &&
-                faceDetection
-              ) {
-
-                await faceDetection.send({
-                  image: video
-                });
-
-              }
-
-            },
-
-          width:
-            1280,
-
-          height:
-            720
-
-        }
-      );
+    status.className =
+      "status success";
 
 
-    camera.start();
+    frameCount =
+      0;
+
+    lastFpsTime =
+      performance.now();
+
+
+    cameraLoop();
 
 
   }
@@ -1246,17 +1285,61 @@ async function startCamera() {
     );
 
 
-    status.textContent =
-      "❌ Kamera açılamadı.\n\n" +
+    showError(
+      "Kamera açılamadı:\n\n" +
       (
         error.message ||
         String(error)
-      );
-
-    status.className =
-      "status error";
+      )
+    );
 
   }
+
+}
+
+
+/* =====================================================
+   KAMERA DÖNGÜSÜ
+===================================================== */
+
+async function cameraLoop() {
+
+  if (!running || photoMode) {
+    return;
+  }
+
+
+  if (
+    video.readyState >= 2 &&
+    faceDetection
+  ) {
+
+    try {
+
+      await faceDetection.send({
+
+        image:
+          video
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.error(
+        error
+      );
+
+    }
+
+  }
+
+
+  animationFrame =
+    requestAnimationFrame(
+      cameraLoop
+    );
 
 }
 
@@ -1271,12 +1354,22 @@ function stopCamera() {
     false;
 
 
+  if (animationFrame) {
+
+    cancelAnimationFrame(
+      animationFrame
+    );
+
+  }
+
+
   if (stream) {
 
     stream
       .getTracks()
       .forEach(
-        track => track.stop()
+        track =>
+          track.stop()
       );
 
   }
@@ -1311,6 +1404,11 @@ function stopCamera() {
     "—";
 
 
+  faceInfo.classList.remove(
+    "visible"
+  );
+
+
   startBtn.disabled =
     false;
 
@@ -1325,18 +1423,644 @@ function stopCamera() {
 
 
 /* =====================================================
-   BUTONLAR
+   FOTOĞRAF SEÇ
 ===================================================== */
 
-startBtn.addEventListener(
-  "click",
-  startCamera
+photoInput.addEventListener(
+  "change",
+  function(event) {
+
+    const file =
+      event.target.files[0];
+
+
+    if (!file) {
+      return;
+    }
+
+
+    /*
+    Kamera kapat
+    */
+
+    stopCamera();
+
+
+    /*
+    Eski URL
+    */
+
+    if (photoURL) {
+
+      URL.revokeObjectURL(
+        photoURL
+      );
+
+    }
+
+
+    /*
+    Yeni URL
+    */
+
+    photoURL =
+      URL.createObjectURL(
+        file
+      );
+
+
+    uploadedImage.src =
+      photoURL;
+
+
+    uploadedImage.onload =
+      async function() {
+
+        photoMode =
+          true;
+
+        running =
+          false;
+
+
+        /*
+        Görüntü
+        */
+
+        video.style.display =
+          "none";
+
+        uploadedImage.style.display =
+          "block";
+
+
+        /*
+        Canvas
+        */
+
+        canvas.width =
+          uploadedImage.naturalWidth;
+
+        canvas.height =
+          uploadedImage.naturalHeight;
+
+
+        ctx.clearRect(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+
+        /*
+        Buton
+        */
+
+        cameraModeBtn.disabled =
+          false;
+
+
+        /*
+        Durum
+        */
+
+        status.textContent =
+          "🖼️ Fotoğraf analiz ediliyor...\n\n" +
+          "AI yüz arıyor...";
+
+        status.className =
+          "status";
+
+
+        try {
+
+
+          await faceDetection.send({
+
+            image:
+              uploadedImage
+
+          });
+
+
+        }
+
+        catch (error) {
+
+          console.error(
+            error
+          );
+
+
+          showError(
+            "Fotoğraf analiz edilemedi:\n\n" +
+            (
+              error.message ||
+              String(error)
+            )
+          );
+
+        }
+
+      };
+
+  }
 );
 
 
-stopBtn.addEventListener(
+/* =====================================================
+   SONUÇLAR
+===================================================== */
+
+function onResults(
+  results
+) {
+
+  /*
+  Kamera veya fotoğraf
+  */
+
+  if (
+    !running &&
+    !photoMode
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+  Canvas boyutu
+  */
+
+  if (photoMode) {
+
+    canvas.width =
+      uploadedImage.naturalWidth;
+
+    canvas.height =
+      uploadedImage.naturalHeight;
+
+  }
+
+  else {
+
+    canvas.width =
+      video.videoWidth;
+
+    canvas.height =
+      video.videoHeight;
+
+  }
+
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  const detections =
+    results.detections ||
+    [];
+
+
+  /*
+  Yüz sayısı
+  */
+
+  faceCount.textContent =
+    detections.length;
+
+
+  /*
+  Yüz listesi
+  */
+
+  faceList.innerHTML =
+    "";
+
+
+  if (
+    detections.length
+  ) {
+
+    faceInfo.classList.add(
+      "visible"
+    );
+
+  }
+
+  else {
+
+    faceInfo.classList.remove(
+      "visible"
+    );
+
+  }
+
+
+  let highestConfidence =
+    0;
+
+
+  /*
+  Her yüz
+  */
+
+  detections.forEach(
+    function(
+      detection,
+      index
+    ) {
+
+
+      const box =
+        detection.boundingBox;
+
+
+      if (!box) {
+        return;
+      }
+
+
+      /*
+      Güven
+      */
+
+      let confidence =
+        0;
+
+
+      if (
+        detection.score &&
+        detection.score.length
+      ) {
+
+        confidence =
+          detection.score[0];
+
+      }
+
+
+      highestConfidence =
+        Math.max(
+          highestConfidence,
+          confidence
+        );
+
+
+      /*
+      Kutu
+      */
+
+      const x =
+        box.xCenter -
+        box.width / 2;
+
+      const y =
+        box.yCenter -
+        box.height / 2;
+
+      const width =
+        box.width;
+
+      const height =
+        box.height;
+
+
+      ctx.strokeStyle =
+        "#00ff88";
+
+      ctx.lineWidth =
+        Math.max(
+          3,
+          canvas.width / 300
+        );
+
+
+      ctx.strokeRect(
+        x,
+        y,
+        width,
+        height
+      );
+
+
+      /*
+      Merkez
+      */
+
+      const centerX =
+        Math.round(
+          box.xCenter
+        );
+
+      const centerY =
+        Math.round(
+          box.yCenter
+        );
+
+
+      /*
+      Etiket
+      */
+
+      ctx.fillStyle =
+        "#00ff88";
+
+      ctx.font =
+        "bold 18px Arial";
+
+
+      ctx.fillText(
+
+        "YÜZ " +
+        (index + 1),
+
+        x,
+
+        Math.max(
+          24,
+          y - 8
+        )
+
+      );
+
+
+      /*
+      Landmark noktaları
+      */
+
+      if (
+        detection.landmarks
+      ) {
+
+        detection.landmarks
+          .forEach(
+            function(point) {
+
+              const px =
+                point.x *
+                canvas.width;
+
+              const py =
+                point.y *
+                canvas.height;
+
+
+              ctx.beginPath();
+
+
+              ctx.arc(
+                px,
+                py,
+                4,
+                0,
+                Math.PI * 2
+              );
+
+
+              ctx.fillStyle =
+                "#00eaff";
+
+
+              ctx.fill();
+
+            }
+          );
+
+      }
+
+
+      /*
+      Yüz bilgi kartı
+      */
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+
+      item.className =
+        "faceItem";
+
+
+      item.innerHTML =
+        `
+        <strong>
+          👤 Yüz ${index + 1}
+        </strong>
+        <br>
+        📊 Güven:
+        ${Math.round(
+          confidence * 100
+        )}%
+        <br>
+        📍 Konum:
+        ${centerX},
+        ${centerY}
+        `;
+
+
+      faceList.appendChild(
+        item
+      );
+
+
+    }
+  );
+
+
+  /*
+  Genel güven
+  */
+
+  confidenceElement.textContent =
+    detections.length
+      ? Math.round(
+          highestConfidence * 100
+        ) + "%"
+      : "0%";
+
+
+  /*
+  İlk yüzün konumu
+  */
+
+  if (
+    detections[0] &&
+    detections[0].boundingBox
+  ) {
+
+    const first =
+      detections[0].boundingBox;
+
+
+    positionElement.textContent =
+      Math.round(
+        first.xCenter
+      ) +
+      ", " +
+      Math.round(
+        first.yCenter
+      );
+
+  }
+
+  else {
+
+    positionElement.textContent =
+      "—";
+
+  }
+
+
+  /*
+  FPS
+  */
+
+  frameCount++;
+
+
+  const now =
+    performance.now();
+
+
+  const elapsed =
+    now -
+    lastFpsTime;
+
+
+  if (
+    elapsed >= 1000
+  ) {
+
+    fpsElement.textContent =
+      Math.round(
+        frameCount /
+        (elapsed / 1000)
+      );
+
+
+    frameCount =
+      0;
+
+
+    lastFpsTime =
+      now;
+
+  }
+
+
+  /*
+  Durum
+  */
+
+  if (
+    photoMode
+  ) {
+
+    if (
+      detections.length
+    ) {
+
+      status.textContent =
+        "🟢 Fotoğraf analiz edildi.\n\n" +
+        detections.length +
+        " yüz algılandı.";
+
+      status.className =
+        "status success";
+
+    }
+
+    else {
+
+      status.textContent =
+        "🔍 Fotoğraf analiz edildi.\n\n" +
+        "Yüz bulunamadı.";
+
+      status.className =
+        "status";
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
+   KAMERAYA GERİ DÖN
+===================================================== */
+
+cameraModeBtn.addEventListener(
   "click",
-  stopCamera
+  function() {
+
+
+    photoMode =
+      false;
+
+
+    uploadedImage.style.display =
+      "none";
+
+
+    video.style.display =
+      "block";
+
+
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+
+    faceCount.textContent =
+      "0";
+
+    fpsElement.textContent =
+      "0";
+
+    confidenceElement.textContent =
+      "0%";
+
+    positionElement.textContent =
+      "—";
+
+
+    faceInfo.classList.remove(
+      "visible"
+    );
+
+
+    cameraModeBtn.disabled =
+      true;
+
+
+    status.textContent =
+      "📷 Kamera moduna dönüldü.\n\n" +
+      "Kamerayı başlatabilirsin.";
+
+
+    status.className =
+      "status";
+
+
+    startBtn.disabled =
+      false;
+
+
+  }
 );
 
 
@@ -1349,4 +2073,5 @@ initializeAI();
 </script>
 
 </body>
+
 </html>
